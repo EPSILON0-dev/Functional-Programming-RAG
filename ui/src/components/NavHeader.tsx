@@ -10,17 +10,16 @@ import {
 
 import {
     IconPencilPlus,
-    IconSearch,
     IconCylinderPlus,
 } from "@tabler/icons-react"
 
-interface NavHeaderInterface {
+interface Props {
     open: boolean;
     onNewConversation: () => void;
     onNewDatabase: () => void;
 }
 
-export function NavHeader(props: NavHeaderInterface): React.JSX.Element {
+export function NavHeader(props: Props): React.JSX.Element {
     return (
         <SidebarHeader>
             <div className="flex flex-row items-center">
@@ -45,15 +44,6 @@ export function NavHeader(props: NavHeaderInterface): React.JSX.Element {
                     >
                         <IconPencilPlus className="mr-2" />
                         <span>New Chat</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        className="active:bg-gray-200 transition-all duration-50"
-                        onClick={() => console.log("Search clicked")}
-                    >
-                        <IconSearch className="mr-2" />
-                        <span>Search Chat</span>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>

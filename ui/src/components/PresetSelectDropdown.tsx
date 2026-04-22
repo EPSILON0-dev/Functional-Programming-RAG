@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { IconAdjustmentsHorizontal, IconChevronDown } from "@tabler/icons-react"
 
-interface PresetSelectionDropdownInterface {
+interface Props {
     presets: { label: string }[]
 }
 
-export function PresetSelectionDropdown({ presets }: PresetSelectionDropdownInterface): React.JSX.Element {
+export function PresetSelectionDropdown({ presets }: Props): React.JSX.Element {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger render={

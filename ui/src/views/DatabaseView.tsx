@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
-import type { Database } from '@/types';
 import { Card, CardDescription, CardTitle } from "@/components/ui/card"
-
 import { IconCylinder } from "@tabler/icons-react"
+import type { Database, NamedIdentifier } from '@/types';
 
-export function DatabaseView(props: { selectedDatabaseId: string | null }): React.JSX.Element {
+interface Props {
+    viewedDatabase: NamedIdentifier | null
+};
+
+export function DatabaseView(props: Props): React.JSX.Element {
     const [database, setDatabase] = useState<Database>();
 
     const fetchDatabases = () => {
-        if (!props.selectedDatabaseId) return;
-        fetch(`http://localhost:8000/api/databases/${props.selectedDatabaseId}/documents`)
+        if (!props.viewedDatabase) return;
+        fetch(`http://localhost:8000/api/databases/${props.viewedDatabase.id}/documents`)
             .then(res => res.json())
             .then(data => setDatabase(data))
             .catch(err => console.error("Fetch failed:", err));
@@ -17,8 +20,8 @@ export function DatabaseView(props: { selectedDatabaseId: string | null }): Reac
 
     useEffect(() => {
         fetchDatabases();
-        console.log(`Fetching database ID: ${props.selectedDatabaseId}`);
-    }, [props.selectedDatabaseId]);
+        console.log(`Fetching database ID: ${props.viewedDatabase?.id}`);
+    }, [props.viewedDatabase]);
 
     return (
         <div className="flex flex-col h-screen min-w-0 flex-1">

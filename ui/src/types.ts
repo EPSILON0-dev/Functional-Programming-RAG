@@ -13,7 +13,7 @@ export interface Conversation
     messages: Message[];
 }
 
-export interface ConversationIdentifier
+export interface NamedIdentifier
 {
     id: string;
     label: string;
@@ -34,10 +34,4 @@ export interface Database
     documents: DatabaseDocument[];
 }
 
-export interface DatabaseIdentifier
-{
-    id: string;
-    label: string;
-}
-
-export type View = "chat" | "database";
+export type View = "landing" | "chat" | "database";

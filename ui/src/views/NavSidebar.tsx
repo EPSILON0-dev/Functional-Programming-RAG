@@ -8,19 +8,20 @@ import {
 import { NavDatabases } from "@/components/NavDatabases"
 import { NavHeader } from "@/components/NavHeader"
 import { NavConversations } from "@/components/NavConversations"
+import type { NamedIdentifier } from "@/types"
 
-interface NavSidebarInterface {
+interface Props {
     onNewConversation: () => void;
-    onSelectConversation: (conversationId: string) => void;
-    onDeleteConversation: (conversationId: string) => void;
-    conversations: { id: string, label: string }[];
+    onSelectConversation: (conversation: NamedIdentifier) => void;
+    onDeleteConversation: (conversation: NamedIdentifier) => void;
+    conversations: NamedIdentifier[] | null;
     onNewDatabase: () => void;
-    onSelectDatabase: (databaseId: string) => void;
-    onDeleteDatabase: (databaseId: string) => void;
-    databases: { id: string, label: string }[];
+    onSelectDatabase: (database: NamedIdentifier) => void;
+    onDeleteDatabase: (database: NamedIdentifier) => void;
+    databases: NamedIdentifier[] | null;
 };
 
-export function NavSidebar(props: NavSidebarInterface): React.JSX.Element {
+export function NavSidebar(props: Props): React.JSX.Element {
     const { open } = useSidebar()
     return (
         <Sidebar collapsible="icon">
@@ -36,6 +37,7 @@ export function NavSidebar(props: NavSidebarInterface): React.JSX.Element {
                     onDatabaseSelect={props.onSelectDatabase}
                 />
                 <NavConversations
+                    open={open}
                     conversations={props.conversations}
                     onConversationSelect={props.onSelectConversation}
                 />

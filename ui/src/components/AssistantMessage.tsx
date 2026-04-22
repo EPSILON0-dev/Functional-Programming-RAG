@@ -2,11 +2,11 @@ import * as React from "react"
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-interface AssistantMessageProps {
+interface Props {
     message: string;
 }
 
-export function AssistantMessage({ message }: AssistantMessageProps): React.JSX.Element {
+export function AssistantMessage({ message }: Props): React.JSX.Element {
     return (
         <div>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>

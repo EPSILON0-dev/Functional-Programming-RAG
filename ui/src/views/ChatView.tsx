@@ -2,23 +2,27 @@ import { useState, useEffect } from 'react';
 import { UserMessage } from "../components/UserMessage"
 import { AssistantMessage } from "../components/AssistantMessage"
 import { ChatInput } from "../components/ChatInput"
-import type { Conversation } from '@/types';
+import type { NamedIdentifier, Conversation } from '@/types';
 
-export function ChatView(props: { selectedConversationId: string | null }): React.JSX.Element {
+interface Props {
+    viewedConversation: NamedIdentifier | null
+};
+
+export function ChatView(props: Props): React.JSX.Element {
     const [conversation, setConversation] = useState<Conversation>();
 
     const fetchConversation = () => {
-        if (!props.selectedConversationId) return;
-        fetch(`http://localhost:8000/api/conversations/${props.selectedConversationId}/messages`)
-        .then(res => res.json())
-        .then(data => setConversation(data))
-        .catch(err => console.error("Fetch failed:", err));
+        if (!props.viewedConversation) return;
+        fetch(`http://localhost:8000/api/conversations/${props.viewedConversation.id}/messages`)
+            .then(res => res.json())
+            .then(data => setConversation(data))
+            .catch(err => console.error("Fetch failed:", err));
     };
 
     useEffect(() => {
         fetchConversation();
-        console.log(`Fetching conversation ID: ${props.selectedConversationId}`);
-    }, [props.selectedConversationId]);
+        console.log(`Fetching conversation ID: ${props.viewedConversation?.id}`);
+    }, [props.viewedConversation]);
 
     return (
         <div className="flex flex-col h-screen min-w-0 flex-1">

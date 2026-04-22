@@ -1,43 +1,62 @@
-import type { ConversationIdentifier, DatabaseIdentifier, View } from "@/types";
+import type { NamedIdentifier, View } from "@/types";
 import { useState, useEffect } from 'react'
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { NavSidebar } from "./views/NavSidebar"
 import { ChatView } from "./views/ChatView"
 import { DatabaseView } from "./views/DatabaseView"
 import './App.css'
+import { LandingView } from "./views/LandingView";
 
 
 function App() {
-  const [conversations, setConversations] = useState<ConversationIdentifier[]>([]);
-  const [databases, setDatabases] = useState<DatabaseIdentifier[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [selectedDatabase, setSelectedDatabase] = useState<string | null>(null);
-  const [view, setView] = useState<View>("chat");
+  const [conversations, setConversations] = useState<NamedIdentifier[] | null>(null);
+  const [databases, setDatabases] = useState<NamedIdentifier[] | null>(null);
+  const [viewedConversation, setViewedConversation] = useState<NamedIdentifier | null>(null);
+  const [viewedDatabase, setViewedDatabase] = useState<NamedIdentifier | null>(null);
+  const [selectedDatabase, setSelectedDatabase] = useState<NamedIdentifier | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<NamedIdentifier | null>(null);
+  const [view, setView] = useState<View>("landing");
 
-  const handleConversationSelect = (conversationId: string) => {
-    console.log(`Selected conversation ${conversationId}`);
-    setSelectedConversation(conversationId);
+  const handleConversationViewSelect = (conversation: NamedIdentifier) => {
+    console.log(`Viewing conversation ${conversation}`);
+    setViewedConversation(conversation);
     setView("chat");
   };
 
-  const handleDatabaseSelect = (databaseId: string) => {
-    console.log(`Selected database ${databaseId}`);
-    setSelectedDatabase(databaseId);
+  const handleDatabaseViewSelect = (database: NamedIdentifier) => {
+    console.log(`Viewing database ${database}`);
+    setViewedDatabase(database);
     setView("database");
   };
+
+  const handleConversationNew = () => {
+    console.log("New conversation");
+    setView("landing");
+  }
+
+  const handleDatabaseSelect = (database: NamedIdentifier) => {
+    console.log(`Selected database ${database}`);
+    setSelectedDatabase(database);
+  }
 
   const fetchConversations = () => {
     fetch("http://localhost:8000/api/conversations")
       .then(res => res.json())
       .then(data => setConversations(data))
-      .catch(err => console.error("Fetch conversations failed:", err));
+      .catch(err => {
+        console.error("Fetch conversations failed:", err);
+        setConversations(null);
+      });
   };
 
   const fetchDatabases = () => {
     fetch("http://localhost:8000/api/databases")
       .then(res => res.json())
       .then(data => setDatabases(data))
-      .catch(err => console.error("Fetch databases failed:", err));
+      .catch(err => {
+        console.error("Fetch databases failed:", err);
+        setDatabases(null);
+      });
   };
 
   useEffect(() => {
@@ -45,11 +64,7 @@ function App() {
     fetchDatabases();
   }, []);
 
-  const handleNewConversation = () => {
-    console.log("New conversation");
-  };
-
-  const handleNewDatabase = () => {
+  const handleDatabaseNew = () => {
     console.log("New database");
   };
 
@@ -57,17 +72,32 @@ function App() {
     <>
       <SidebarProvider>
         <NavSidebar
-          onNewConversation={handleNewConversation}
-          onSelectConversation={handleConversationSelect}
+          onNewConversation={handleConversationNew}
+          onSelectConversation={handleConversationViewSelect}
           onDeleteConversation={() => { }}
-          onNewDatabase={handleNewDatabase}
-          onSelectDatabase={handleDatabaseSelect}
+          onNewDatabase={handleDatabaseNew}
+          onSelectDatabase={handleDatabaseViewSelect}
           onDeleteDatabase={() => { }}
           conversations={conversations}
           databases={databases}
         />
-        {view === "chat" && (<ChatView selectedConversationId={selectedConversation} />)}
-        {view === "database" && (<DatabaseView selectedDatabaseId={selectedDatabase} />)}
+        {view === "landing" && (
+          <LandingView
+            databases={databases}
+            selectedDatabase={selectedDatabase}
+            onSelectDatabase={handleDatabaseSelect}
+          />
+        )}
+        {view === "chat" && (
+          <ChatView
+            viewedConversation={viewedConversation}
+          />
+        )}
+        {view === "database" && (
+          <DatabaseView
+            viewedDatabase={viewedDatabase}
+          />
+        )}
       </SidebarProvider>
     </>
   )
