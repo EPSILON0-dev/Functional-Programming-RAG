@@ -32,7 +32,7 @@ export function NavChats(): React.JSX.Element {
                         return conversations ? conversations.map((conv) => (
                             <SidebarMenuItem className="group/item" key={conv.id}>
                                 <SidebarMenuButton
-                                    className="active:bg-gray-200 transition-all duration-50"
+                                    className="active:bg-secondary transition-all duration-50"
                                     onClick={() => navigate(`/chat/${conv.id}`)}
                                 >
                                     <span className="whitespace-nowrap truncate">{conv.label}</span>

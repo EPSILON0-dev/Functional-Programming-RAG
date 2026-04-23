@@ -35,7 +35,7 @@ export function NavDatabases(): React.JSX.Element {
                         {databases ? databases.map((db) => (
                             <SidebarMenuItem className="group/item" key={db.id}>
                                 <SidebarMenuButton
-                                    className="w-full text-left active:bg-gray-200 transition-all duration-50"
+                                    className="w-full text-left active:bg-secondary transition-all duration-50"
                                     onClick={() => navigate(`/database/${db.id}`)}
                                 >
                                     <IconCylinder className={`mr-2 ${open ? "opacity-100" : "opacity-0"} transition-all duration-100`} />
