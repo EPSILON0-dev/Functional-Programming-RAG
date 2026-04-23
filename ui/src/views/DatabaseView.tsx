@@ -1,27 +1,22 @@
-import { useState, useEffect } from 'react';
 import { Card, CardDescription, CardTitle } from "@/components/ui/card"
 import { IconCylinder } from "@tabler/icons-react"
-import type { Database, NamedIdentifier } from '@/types';
+import type { Database } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'react-router-dom';
 
-interface Props {
-    viewedDatabase: NamedIdentifier | null
-};
+export function DatabaseView(): React.JSX.Element {
+    const { databaseId } = useParams<{ databaseId: string }>();
 
-export function DatabaseView(props: Props): React.JSX.Element {
-    const [database, setDatabase] = useState<Database>();
-
-    const fetchDatabases = () => {
-        if (!props.viewedDatabase) return;
-        fetch(`http://localhost:8000/api/databases/${props.viewedDatabase.id}/documents`)
-            .then(res => res.json())
-            .then(data => setDatabase(data))
-            .catch(err => console.error("Fetch failed:", err));
-    };
-
-    useEffect(() => {
-        fetchDatabases();
-        console.log(`Fetching database ID: ${props.viewedDatabase?.id}`);
-    }, [props.viewedDatabase]);
+    const { data: database, isLoading, isError } = useQuery<Database>({
+        queryKey: ["database", databaseId],
+        queryFn: async () => {
+            const response = await fetch(`/api/databases/${databaseId}`);
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        },
+    });
 
     return (
         <div className="flex flex-col h-screen min-w-0 flex-1">

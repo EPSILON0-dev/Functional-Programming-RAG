@@ -11,7 +11,7 @@ def get_databases(offset: int = 0, limit: int = 10):
     return [{"label": db.label, "id": db.id} for db in sliced]
 
 
-@app.get("/api/databases/{database_id}/documents")
+@app.get("/api/databases/{database_id}")
 def get_documents(database_id: str, offset: int = 0, limit: int = 10):
     db = next((d for d in DATABASES if d.id == database_id), None)
     if db is None:
@@ -20,15 +20,15 @@ def get_documents(database_id: str, offset: int = 0, limit: int = 10):
     return {"label": db.label, "id": db.id, "documents": [{"id": doc.id, "title": doc.title, "abstract": doc.abstract, "content": doc.content} for doc in docs]}
 
 
-@app.get("/api/conversations")
-def get_conversations(offset: int = 0, limit: int = 10):
+@app.get("/api/chats")
+def get_chats(offset: int = 0, limit: int = 10):
     sliced = CONVERSATIONS[offset:offset + limit]
     return [{"id": conv.id, "label": conv.label} for conv in sliced]
 
 
-@app.get("/api/conversations/{conversation_id}/messages")
-def get_conversation_messages(conversation_id: str, offset: int = 0, limit: int = 10):
-    conv = next((c for c in CONVERSATIONS if c.id == conversation_id), None)
+@app.get("/api/chats/{chat_id}")
+def get_chat_messages(chat_id: str, offset: int = 0, limit: int = 10):
+    conv = next((c for c in CONVERSATIONS if c.id == chat_id), None)
     if conv is None:
         return []
     msgs = conv.messages[::-1][offset:offset + limit]

@@ -1,28 +1,25 @@
-import { useState, useEffect } from 'react';
-import { UserMessage } from "../components/UserMessage"
-import { AssistantMessage } from "../components/AssistantMessage"
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
+import {
+    AssistantMessage,
+    UserMessage,
+} from "../components/Messages"
 import { ChatInput } from "../components/ChatInput"
-import type { NamedIdentifier, Conversation } from '@/types';
+import type { Conversation } from '@/types';
 
-interface Props {
-    viewedConversation: NamedIdentifier | null
-};
+export function ChatView(): React.JSX.Element {
+    const { chatId } = useParams<{ chatId: string }>();
 
-export function ChatView(props: Props): React.JSX.Element {
-    const [conversation, setConversation] = useState<Conversation>();
-
-    const fetchConversation = () => {
-        if (!props.viewedConversation) return;
-        fetch(`http://localhost:8000/api/conversations/${props.viewedConversation.id}/messages`)
-            .then(res => res.json())
-            .then(data => setConversation(data))
-            .catch(err => console.error("Fetch failed:", err));
-    };
-
-    useEffect(() => {
-        fetchConversation();
-        console.log(`Fetching conversation ID: ${props.viewedConversation?.id}`);
-    }, [props.viewedConversation]);
+    const { data: conversation, isLoading, isError } = useQuery<Conversation>({
+        queryKey: ["conversation", chatId],
+        queryFn: async () => {
+            const response = await fetch(`/api/chats/${chatId}`);
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        },
+    });
 
     return (
         <div className="flex flex-col h-screen min-w-0 flex-1">
@@ -35,7 +32,7 @@ export function ChatView(props: Props): React.JSX.Element {
             <main className="flex-1 min-w-0 overflow-y-auto">
                 <div className="max-w-4xl min-w-0 mx-auto h-full px-4">
                     <div className="h-8" />
-                    {conversation?.messages.map((item, index) => (
+                    {conversation?.messages?.map((item, index) => (
                         <div key={index}>
                             {item.role === "user" ? (
                                 <UserMessage message={item.content} />
@@ -53,5 +50,5 @@ export function ChatView(props: Props): React.JSX.Element {
                 </div>
             </footer>
         </div>
-    )
+    );
 }

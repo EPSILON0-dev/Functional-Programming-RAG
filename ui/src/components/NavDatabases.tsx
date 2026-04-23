@@ -5,6 +5,7 @@ import {
     SidebarMenu,
     SidebarMenuItem,
     SidebarMenuButton,
+    useSidebar,
 } from "./ui/sidebar"
 
 import {
@@ -12,32 +13,32 @@ import {
     IconDots,
 } from "@tabler/icons-react"
 
-import type { NamedIdentifier } from "@/types";
 import DatabaseSkeleton from "./DatabaseSkeleton";
 import { Skeleton } from "./ui/skeleton";
+import { AppContext } from "@/AppContext";
+import { useNavigate } from "react-router-dom";
 
-interface Props {
-    open: boolean;
-    databases: NamedIdentifier[] | null;
-    onDatabaseSelect: (database: NamedIdentifier) => void;
-}
+export function NavDatabases(): React.JSX.Element {
+    const { open } = useSidebar();
+    const ctx = React.useContext(AppContext);
+    const databases = ctx?.state.databases ?? null;
+    const navigate = useNavigate();
 
-export function NavDatabases(props: Props): React.JSX.Element {
     return (
         <>
-            {props.open &&
+            {open &&
                 <SidebarGroup>
                     <SidebarGroupLabel>
-                        {props.databases ? "Databases" : <Skeleton className="h-4 w-24" />}
+                        {databases ? "Databases" : <Skeleton className="h-4 w-24" />}
                     </SidebarGroupLabel>
                     <SidebarMenu>
-                        {props.databases ? props.databases?.map((db) => (
+                        {databases ? databases.map((db) => (
                             <SidebarMenuItem className="group/item" key={db.id}>
                                 <SidebarMenuButton
-                                    className="active:bg-gray-200 transition-all duration-50"
-                                    onClick={() => props.onDatabaseSelect(db)}
+                                    className="w-full text-left active:bg-gray-200 transition-all duration-50"
+                                    onClick={() => navigate(`/database/${db.id}`)}
                                 >
-                                    <IconCylinder className={`mr-2 ${props.open ? "opacity-100" : "opacity-0"} transition-all duration-100`} />
+                                    <IconCylinder className={`mr-2 ${open ? "opacity-100" : "opacity-0"} transition-all duration-100`} />
                                     <span className="whitespace-nowrap truncate">{db.label}</span>
                                     <div
                                         className="ml-auto mr-2 max-h-fit"
