@@ -50,4 +50,5 @@ Projekt oparty jest na podejściu **RAG** (_Retrieval Augmented Generation_), kt
 | Frontend | **React** + **TypeScript** | Interfejs użytkownika (okno czatu) |
 | Logika aplikacji | **TypeScript**/**PureScript** | Funkcyjna logika biznesowa i integracja z API |
 | Baza danych | **PostgreSQL** + **pgvector** | Przechowywanie dokumentów i wektorów osadzeń |
+| Przygotowanie dokumentów | **PyMuPDF** + **pandoc** | Konwertowanie dokumentów do markdown'a |
 | Modele językowe | **OpenRouter** / **Ollama** | Generowanie odpowiedzi i tworzenie osadzeń |
