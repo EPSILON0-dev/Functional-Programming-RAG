@@ -29,7 +29,7 @@ export function NavDatabases(): React.JSX.Element {
             {open &&
                 <SidebarGroup>
                     <SidebarGroupLabel>
-                        {databases ? "Databases" : <Skeleton className="h-4 w-24" />}
+                        {databases ? <div className="select-none">Databases</div> : <Skeleton className="h-4 w-24" />}
                     </SidebarGroupLabel>
                     <SidebarMenu>
                         {databases ? databases.map((db) => (

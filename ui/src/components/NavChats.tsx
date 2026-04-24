@@ -25,7 +25,7 @@ export function NavChats(): React.JSX.Element {
         <>
             {open && <SidebarGroup>
                 <SidebarGroupLabel>
-                    {conversations ? "Conversations" : <Skeleton className="h-4 w-24" />}
+                    {conversations ? <div className="select-none">Conversations</div> : <Skeleton className="h-4 w-24" />}
                 </SidebarGroupLabel>
                 <SidebarMenu>
                     {(() => {

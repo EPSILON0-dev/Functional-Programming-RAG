@@ -1,5 +1,6 @@
 import { createContext, useEffect, useReducer } from "react";
 import type { NamedIdentifier } from "./types";
+import { QueryClient } from "@tanstack/react-query";
 
 type Theme = "light" | "dark";
 
@@ -47,6 +48,8 @@ function reducer(state: AppState, action: Action): AppState {
             return state;
     }
 }
+
+export const queryClient = new QueryClient()
 
 export const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | undefined>(undefined);
 

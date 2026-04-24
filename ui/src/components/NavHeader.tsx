@@ -28,7 +28,7 @@ export function NavHeader(): React.JSX.Element {
         <SidebarHeader>
             <div className="flex flex-row items-center">
                 <SidebarTrigger />
-                <span className={`mx-auto font-semibold text-base whitespace-nowrap overflow-hidden transition-all duration-100 ${open ? "opacity-100" : "opacity-0"}`}>PF Chatbot</span>
+                <span className={`select-none mx-auto font-semibold text-base whitespace-nowrap overflow-hidden transition-all duration-100 ${open ? "opacity-100" : "opacity-0"}`}>PF Chatbot</span>
             </div>
             <SidebarSeparator className="opacity-0 mx-auto" />
             <SidebarMenu>

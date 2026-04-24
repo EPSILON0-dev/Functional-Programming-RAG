@@ -1,14 +1,12 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { ChatView } from "./views/ChatView"
 import { DatabaseView } from "./views/DatabaseView"
 import { LandingView } from "./views/LandingView";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
-import { AppProvider } from "./AppContext";
+import { AppProvider, queryClient } from "./AppContext";
 import { NavSidebar } from "./views/NavSidebar";
 import { SidebarProvider } from "./components/ui/sidebar";
 import './App.css'
-
-const queryClient = new QueryClient()
 
 function Layout() {
   return (
