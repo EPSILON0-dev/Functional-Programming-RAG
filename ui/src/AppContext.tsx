@@ -1,6 +1,7 @@
 import { createContext, useEffect, useReducer } from "react";
 import type { NamedIdentifier } from "./types";
 import { QueryClient } from "@tanstack/react-query";
+import { authGetCurrentUser, authLogout, type AuthUser } from "./lib/auth";
 
 type Theme = "light" | "dark";
 
@@ -12,6 +13,7 @@ const initialState: AppState = {
     connectionError: false,
     selectedDatabase: null,
     theme: storedTheme,
+    currentUser: authGetCurrentUser(),
 };
 
 interface AppState {
@@ -20,6 +22,7 @@ interface AppState {
     connectionError: boolean;
     selectedDatabase: NamedIdentifier | null;
     theme: Theme;
+    currentUser: AuthUser | null;
 }
 
 type Action =
@@ -27,7 +30,10 @@ type Action =
     | { type: "SET_DATABASES"; payload: NamedIdentifier[] }
     | { type: "CONNECTION_ERROR" }
     | { type: "SELECT_DATABASE"; payload: NamedIdentifier }
-    | { type: "TOGGLE_THEME" };
+    | { type: "TOGGLE_THEME" }
+    | { type: "LOGIN"; payload: AuthUser }
+    | { type: "LOGOUT" }
+    | { type: "UPDATE_USERNAME"; payload: string };
 
 function reducer(state: AppState, action: Action): AppState {
     switch (action.type) {
@@ -44,6 +50,15 @@ function reducer(state: AppState, action: Action): AppState {
             localStorage.setItem("theme", next);
             return { ...state, theme: next };
         }
+        case "LOGIN":
+            return { ...state, currentUser: action.payload };
+        case "LOGOUT":
+            authLogout();
+            return { ...state, currentUser: null };
+        case "UPDATE_USERNAME":
+            return state.currentUser
+                ? { ...state, currentUser: { ...state.currentUser, username: action.payload } }
+                : state;
         default:
             return state;
     }

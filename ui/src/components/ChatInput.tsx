@@ -1,7 +1,7 @@
 import { Send } from "lucide-react"
 
 interface Props {
-  onMessageSent: (message: string) => Promise<void> | null;
+  onMessageSent: ((message: string) => Promise<void>) | null;
 }
 
 export function ChatInput(props: Props): React.JSX.Element {

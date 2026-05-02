@@ -1,11 +1,13 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { ChatView } from "./views/ChatView"
 import { DatabaseView } from "./views/DatabaseView"
-import { LandingView } from "./views/LandingView";
+import { NewChatView } from "./views/NewChatView";
+import { AuthView } from "./views/AuthView";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
-import { AppProvider, queryClient } from "./AppContext";
+import { AppProvider, queryClient, AppContext } from "./AppContext";
 import { NavSidebar } from "./views/NavSidebar";
 import { SidebarProvider } from "./components/ui/sidebar";
+import { useContext } from "react";
 import './App.css'
 
 function Layout() {
@@ -23,11 +25,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <LandingView
-          databases={null}
-          selectedDatabase={null}
-          onSelectDatabase={() => { }}
-        />
+        element: <NewChatView />
       },
       {
         path: "/chat/:chatId",
@@ -41,11 +39,22 @@ const router = createBrowserRouter([
   },
 ]);
 
+function AuthGate() {
+  const ctx = useContext(AppContext);
+  const isLoggedIn = ctx?.state.currentUser != null;
+
+  if (!isLoggedIn) {
+    return <AuthView />;
+  }
+
+  return <RouterProvider router={router} />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
-        <RouterProvider router={router} />
+        <AuthGate />
       </AppProvider>
     </QueryClientProvider>
   );

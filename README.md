@@ -1,6 +1,6 @@
 # Chatbot przedmiotu „Programowanie Funkcyjne"
 
-Asystent konwersacyjny wspomagający naukę przedmiotu _Programowanie Funkcyjne_. Odpowiada na pytania dotyczące materiału wykładowego, ćwiczeń i zadań, opierając się na dostarczonych dokumentach kursu.
+Asystent wspomagający naukę przedmiotu _Programowanie Funkcyjne_. Odpowiada na pytania dotyczące materiału wykładowego, ćwiczeń i zadań, opierając się na dostarczonych dokumentach kursu.
 
 ---
 
@@ -18,7 +18,7 @@ Asystent konwersacyjny wspomagający naukę przedmiotu _Programowanie Funkcyjne_
 
 ## Architektura
 
-Projekt oparty jest na podejściu **RAG** (_Retrieval Augmented Generation_), które łączy wyszukiwanie semantyczne z generowaniem tekstu przez model językowy.
+Projekt oparty jest na podejściu **RAG** (_Retrieval Augmented Generation_), które łączy przeszukiwenie bazy danych z generowaniem tekstu przez model językowy.
 
 ### Indeksowanie dokumentów
 
