@@ -1,0 +1,13 @@
+# Used only for development purposes, not for production
+# Only exposes the database to the host machine, doesn't start the backend or frontend services
+services:
+  db:
+    image: postgres:15
+    container_name: pf_rag_db
+    restart: no
+    environment:
+      POSTGRES_USER: pf_rag_dev_user
+      POSTGRES_PASSWORD: pf_rag_dev_password
+      POSTGRES_DB: pf_rag_db
+    ports:
+      - "5432:5432"
