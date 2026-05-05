@@ -61,3 +61,6 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Configure the secret for joken
+config :joken, default_signer: "super_secret_key_for_dev_only_change_in_prod"
