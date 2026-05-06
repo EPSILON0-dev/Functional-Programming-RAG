@@ -13,7 +13,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { AppContext } from "@/AppContext";
-import { authChangePassword, authChangeUsername } from "@/lib/auth";
+// import { authChangePassword, authChangeUsername } from "@/lib/auth";
 
 interface AccountSettingsDialogProps {
     open: boolean;
@@ -59,7 +59,7 @@ export function AccountSettingsDialog({ open, onOpenChange }: AccountSettingsDia
     }
 
     function handleChangeUsername(e: React.FormEvent) {
-        e.preventDefault();
+        /*e.preventDefault();
         setUsernameError(null);
         setUsernameSuccess(false);
         if (!user) return;
@@ -70,11 +70,11 @@ export function AccountSettingsDialog({ open, onOpenChange }: AccountSettingsDia
             ctx?.dispatch({ type: "UPDATE_USERNAME", payload: newUsername.trim() });
             setUsernameSuccess(true);
             setNewUsername("");
-        }
+        }*/
     }
 
     function handleChangePassword(e: React.FormEvent) {
-        e.preventDefault();
+        /*e.preventDefault();
         setPasswordError(null);
         setPasswordSuccess(false);
         if (!user) return;
@@ -90,7 +90,7 @@ export function AccountSettingsDialog({ open, onOpenChange }: AccountSettingsDia
             setCurrentPassword("");
             setNewPassword("");
             setConfirmNewPassword("");
-        }
+        }*/
     }
 
     return (

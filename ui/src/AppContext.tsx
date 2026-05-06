@@ -13,7 +13,7 @@ const initialState: AppState = {
     connectionError: false,
     selectedDatabase: null,
     theme: storedTheme,
-    currentUser: authGetCurrentUser(),
+    currentUser: await authGetCurrentUser(),
 };
 
 interface AppState {

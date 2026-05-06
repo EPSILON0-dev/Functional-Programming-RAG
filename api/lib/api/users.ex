@@ -26,7 +26,11 @@ defmodule Api.Users do
     |> Api.Repo.insert()
   end
 
-  def get_user(attrs) do
-    Api.Repo.get_by(__MODULE__, username: attrs["username"])
+  def get_user_by_username(username) do
+    Api.Repo.get_by(__MODULE__, username: username)
+  end
+
+  def get_user_by_id(id) do
+    Api.Repo.get_by(__MODULE__, id: id)
   end
 end

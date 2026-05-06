@@ -7,8 +7,6 @@ import { AppContext } from "@/AppContext";
 import { authLogin, authRegister } from "@/lib/auth";
 import { IconDatabase, IconMessages, IconSearch, IconLock, IconArrowLeft } from "@tabler/icons-react";
 
-// TODO split up into 3 distinct views
-
 type Screen = "landing" | "login" | "register";
 
 const features = [
@@ -43,13 +41,13 @@ export function AuthView() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError(null);
         setSuccess(null);
 
         if (screen === "login") {
-            const result = authLogin(username, password);
+            const result = await authLogin(username, password);
             if (!result.success) {
                 setError(result.error ?? "Login failed.");
             } else {
@@ -60,7 +58,7 @@ export function AuthView() {
                 setError("Passwords do not match.");
                 return;
             }
-            const result = authRegister(username, password);
+            const result = await authRegister(username, password);
             if (!result.success) {
                 setError(result.error ?? "Registration failed.");
             } else {

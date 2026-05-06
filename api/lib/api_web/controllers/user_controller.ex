@@ -10,14 +10,12 @@ defmodule ApiWeb.Controllers.UserController do
   end
 
   defp gen_user_token(user) do
-    # TODO Move to a parameter
     ApiWeb.Token.generate_and_sign!(%{
-      "user_id" => user.id,
-      "timestamp" => DateTime.utc_now() |> DateTime.to_unix()
+      "user_id" => user.id
     })
   end
 
-  def register(conn, %{"username" => username, "password" => password} = params) do
+  def register(conn, %{"username" => username, "password" => password}) do
     query_params = %{"username" => username, "password" => hash_password(password)}
     query_result = Api.Users.create_user(query_params)
 
@@ -27,7 +25,7 @@ defmodule ApiWeb.Controllers.UserController do
 
       {:error, reason} ->
         if reason.errors[:username] do
-          conn |> put_status(:conflict) |> json(%{error: "Username already exists"})
+          conn |> put_status(:conflict) |> json(%{error: "User already exists"})
         else
           conn |> put_status(:internal_server_error) |> json(%{error: "Failed to create user"})
         end
@@ -38,11 +36,8 @@ defmodule ApiWeb.Controllers.UserController do
     conn |> return_bad_request()
   end
 
-  def login(conn, %{"username" => username, "password" => password} = params) do
-    query_params = %{"username" => username}
-    query_result = Api.Users.get_user(query_params)
-
-    case query_result do
+  def auth(conn, %{"username" => username, "password" => password}) do
+    case Api.Users.get_user_by_username(username) do
       nil ->
         conn |> put_status(:not_found) |> json(%{error: "User not found"})
 
@@ -64,5 +59,25 @@ defmodule ApiWeb.Controllers.UserController do
 
   def login(conn, _params) do
     conn |> return_bad_request()
+  end
+
+  def logout(conn, _) do
+    conn
+    |> delete_resp_cookie("authorization")
+    |> put_status(:ok)
+    |> json(%{message: "Logged out successfully"})
+  end
+
+  def me(conn, _) do
+    cookie = conn.req_cookies["authorization"]
+
+    with ["Bearer", token] <- String.split(cookie || "", " "),
+         {:ok, claims} <- ApiWeb.Token.verify_and_validate(token),
+         user_id = claims["user_id"],
+         user when not is_nil(user) <- Api.Users.get_user_by_id(user_id) do
+      conn |> put_status(:ok) |> json(%{id: user.id, username: user.username})
+    else
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
   end
 end
