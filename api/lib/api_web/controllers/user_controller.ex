@@ -5,10 +5,6 @@ defmodule ApiWeb.Controllers.UserController do
     Bcrypt.Base.hash_password(password, Bcrypt.Base.gen_salt(12, true))
   end
 
-  defp return_bad_request(conn) do
-    conn |> put_status(:bad_request) |> json(%{error: "Invalid parameters"})
-  end
-
   defp gen_user_token(user) do
     ApiWeb.Token.generate_and_sign!(%{
       "user_id" => user.id
@@ -17,7 +13,7 @@ defmodule ApiWeb.Controllers.UserController do
 
   def register(conn, %{"username" => username, "password" => password}) do
     query_params = %{"username" => username, "password" => hash_password(password)}
-    query_result = Api.Users.create_user(query_params)
+    query_result = Api.User.create_user(query_params)
 
     case query_result do
       {:ok, user} ->
@@ -32,12 +28,8 @@ defmodule ApiWeb.Controllers.UserController do
     end
   end
 
-  def register(conn, _params) do
-    conn |> return_bad_request()
-  end
-
   def auth(conn, %{"username" => username, "password" => password}) do
-    case Api.Users.get_user_by_username(username) do
+    case Api.User.get_user_by_username(username) do
       nil ->
         conn |> put_status(:not_found) |> json(%{error: "User not found"})
 
@@ -57,10 +49,6 @@ defmodule ApiWeb.Controllers.UserController do
     end
   end
 
-  def login(conn, _params) do
-    conn |> return_bad_request()
-  end
-
   def logout(conn, _) do
     conn
     |> delete_resp_cookie("authorization")
@@ -69,12 +57,7 @@ defmodule ApiWeb.Controllers.UserController do
   end
 
   def me(conn, _) do
-    cookie = conn.req_cookies["authorization"]
-
-    with ["Bearer", token] <- String.split(cookie || "", " "),
-         {:ok, claims} <- ApiWeb.Token.verify_and_validate(token),
-         user_id = claims["user_id"],
-         user when not is_nil(user) <- Api.Users.get_user_by_id(user_id) do
+    with user when not is_nil(user) <- Api.User.get_user_by_id(conn.assigns[:user_id]) do
       conn |> put_status(:ok) |> json(%{id: user.id, username: user.username})
     else
       _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})

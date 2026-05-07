@@ -37,12 +37,12 @@ export function DatabaseView(): React.JSX.Element {
                     <div className="flex justify-center items-center">
                         <div className="flex-row flex gap-2 items-center">
                             <IconCylinder />
-                            <h1 className="text-center">{database?.label}</h1>
+                            <h1 className="text-center">{database?.name}</h1>
                         </div>
                     </div>
                 </div>
                 <div className="px-4 py-4 max-w-4xl mx-auto">
-                    <SearchInput placeholderText={`Search database "${database?.label}" . . . `} onMessageSent={onMessageSent} />
+                    <SearchInput placeholderText={`Search database "${database?.name}" . . . `} onMessageSent={onMessageSent} />
                 </div>
             </header>
             <div className="max-w-4xl min-w-0 mx-auto h-full px-4">

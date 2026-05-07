@@ -35,10 +35,10 @@ export function NavChats(): React.JSX.Element {
                                     className="active:bg-secondary transition-all duration-50"
                                     onClick={() => navigate(`/chat/${conv.id}`)}
                                 >
-                                    <span className="whitespace-nowrap truncate">{conv.label}</span>
+                                    <span className="whitespace-nowrap truncate">{conv.name}</span>
                                     <div
                                         className="ml-auto mr-2 max-h-fit"
-                                        onClick={(e) => { e.stopPropagation(); console.log(`Conversation ${conv.label} options clicked`); }}
+                                        onClick={(e) => { e.stopPropagation(); console.log(`Conversation ${conv.name} options clicked`); }}
                                     >
                                         <IconDots className="opacity-40 max-w-0 group-hover/item:max-w-full hover:opacity-100 transition-all duration-100" />
                                     </div>

@@ -1,4 +1,4 @@
-defmodule Api.Users do
+defmodule Api.User do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -8,6 +8,8 @@ defmodule Api.Users do
     field :username, :string
     field :password, :string
     field :deleted_at, :utc_datetime
+    has_many :chats, Api.Chat, foreign_key: :author_id
+    has_many :messages, Api.Message, foreign_key: :author_id
 
     timestamps(type: :utc_datetime)
   end

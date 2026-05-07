@@ -1,5 +1,6 @@
 import { ChatInput } from "../components/ChatInput"
 import { DatabaseDropdown } from "../components/DatabaseDropdown"
+import { startNewChat } from "@/lib/sendMessage"
 
 export function NewChatView(): React.JSX.Element {
     return (
@@ -7,7 +8,7 @@ export function NewChatView(): React.JSX.Element {
             <main className="m-auto max-w-4xl w-full">
                 <div className="mx-8">
                     <h1 className="text-3xl text-center mb-12">Select the database and ask a question</h1>
-                    <ChatInput onMessageSent={null} />
+                    <ChatInput onMessageSent={startNewChat} />
                     <div className="ml-2 mt-2">
                         <DatabaseDropdown />
                     </div>

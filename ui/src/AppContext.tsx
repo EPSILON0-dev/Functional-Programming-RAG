@@ -81,13 +81,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, [state.theme]);
 
     useEffect(() => {
+        // TODO Run these in parallel
         async function initialLoad() {
             const chatsResp = await fetch("/api/chats/");
-            const databasesResp = await fetch("/api/databases/");
             const conversations: NamedIdentifier[] = await chatsResp.json();
-            const databases: NamedIdentifier[] = await databasesResp.json();
-
             dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
+
+            const databasesResp = await fetch("/api/databases/");
+            const databases: NamedIdentifier[] = await databasesResp.json();
             dispatch({ type: "SET_DATABASES", payload: databases });
         };
         initialLoad();

@@ -10,7 +10,7 @@ import {
 import { IconAdjustmentsHorizontal, IconChevronDown } from "@tabler/icons-react"
 
 interface Props {
-    presets: { label: string }[]
+    presets: { name: string }[]
 }
 
 export function PresetSelectionDropdown({ presets }: Props): React.JSX.Element {
@@ -19,14 +19,14 @@ export function PresetSelectionDropdown({ presets }: Props): React.JSX.Element {
             <DropdownMenuTrigger render={
                 <Button variant="outline">
                     <IconAdjustmentsHorizontal />
-                    {presets[0].label}
+                    {presets[0].name}
                     <IconChevronDown />
                 </Button>
             } />
             <DropdownMenuContent className="w-60" align="start">
                 {presets.map((preset) => (
-                    <div key={preset.label}>
-                        <DropdownMenuItem><IconAdjustmentsHorizontal />{preset.label}</DropdownMenuItem>
+                    <div key={preset.name}>
+                        <DropdownMenuItem><IconAdjustmentsHorizontal />{preset.name}</DropdownMenuItem>
                     </div>
                 ))}
             </DropdownMenuContent>

@@ -39,10 +39,10 @@ export function NavDatabases(): React.JSX.Element {
                                     onClick={() => navigate(`/database/${db.id}`)}
                                 >
                                     <IconCylinder className={`mr-2 ${open ? "opacity-100" : "opacity-0"} transition-all duration-100`} />
-                                    <span className="whitespace-nowrap truncate">{db.label}</span>
+                                    <span className="whitespace-nowrap truncate">{db.name}</span>
                                     <div
                                         className="ml-auto mr-2 max-h-fit"
-                                        onClick={(e) => { e.stopPropagation(); console.log(`Database ${db.label} options clicked`); }}
+                                        onClick={(e) => { e.stopPropagation(); console.log(`Database ${db.name} options clicked`); }}
                                     >
                                         <IconDots className="opacity-40 max-w-0 group-hover/item:max-w-full hover:opacity-100 transition-all duration-100" />
                                     </div>

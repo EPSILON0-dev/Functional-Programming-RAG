@@ -6,17 +6,16 @@ export interface Message
     timestamp: string;
 }
 
-export interface Conversation
+export interface Chat
 {
     id: string;
-    label: string;
-    messages: Message[];
+    name: string;
 }
 
 export interface NamedIdentifier
 {
     id: string;
-    label: string;
+    name: string;
 }
 
 export interface DatabaseDocument
@@ -30,7 +29,7 @@ export interface DatabaseDocument
 export interface Database
 {
     id: string;
-    label: string;
+    name: string;
     documents: DatabaseDocument[];
 }
 

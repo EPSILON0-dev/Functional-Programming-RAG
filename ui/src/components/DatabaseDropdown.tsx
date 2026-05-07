@@ -24,17 +24,17 @@ export function DatabaseDropdown(): React.JSX.Element {
                         <IconCylinder />
                         {databases === null ? "Loading ..." :
                             (selectedDatabase === null ? "Select Database" :
-                                databases !== null && databases?.find((x) => x.id === selectedDatabase?.id)?.label)}
+                                databases !== null && databases?.find((x) => x.id === selectedDatabase?.id)?.name)}
                         <IconChevronDown />
                     </Button>
                 } />
                 <DropdownMenuContent className="w-60" align="start">
                     {databases?.map((db) => (
-                        <div key={db.label}>
+                        <div key={db.name}>
                             <DropdownMenuItem
                                 onClick={() => { ctx?.dispatch({ type: "SELECT_DATABASE", payload: db }) }}
                             >
-                                <IconCylinder />{db.label}
+                                <IconCylinder />{db.name}
                             </DropdownMenuItem>
                         </div>
                     ))}
