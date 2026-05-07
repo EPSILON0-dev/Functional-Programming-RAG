@@ -7,7 +7,7 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 
-import { NavDatabases } from "@/components/NavDatabases"
+// import { NavDatabases } from "@/components/NavDatabases"
 import { NavHeader } from "@/components/NavHeader"
 import { NavChats } from "@/components/NavChats"
 import { AccountDialog } from "@/components/AccountDialog"
@@ -18,7 +18,7 @@ export function NavSidebar(): React.JSX.Element {
         <Sidebar collapsible="icon">
             <NavHeader />
             <SidebarContent className={`${open ? "" : "pointer-events-none"}`}>
-                <NavDatabases />
+                {/*<NavDatabases />*/}
                 <NavChats />
             </SidebarContent>
             <SidebarFooter>

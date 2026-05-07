@@ -80,16 +80,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
     }, [state.theme]);
 
-    useEffect(() => {
-        // TODO Run these in parallel
-        async function initialLoad() {
-            const chatsResp = await fetch("/api/chats/");
-            const conversations: NamedIdentifier[] = await chatsResp.json();
-            dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
+    const fetchConversations = async () => {
+        const chatsResp = await fetch("/api/chats/");
+        const conversations: NamedIdentifier[] = await chatsResp.json();
+        dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
+    }
 
-            const databasesResp = await fetch("/api/databases/");
-            const databases: NamedIdentifier[] = await databasesResp.json();
-            dispatch({ type: "SET_DATABASES", payload: databases });
+    const fetchDatabases = async () => {
+        const databasesResp = await fetch("/api/databases/");
+        const databases: NamedIdentifier[] = await databasesResp.json();
+        dispatch({ type: "SET_DATABASES", payload: databases });
+    }
+
+    useEffect(() => {
+        async function initialLoad() {
+            fetchConversations();
+            fetchDatabases();
         };
         initialLoad();
     }, []);

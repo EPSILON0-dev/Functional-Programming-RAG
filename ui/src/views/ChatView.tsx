@@ -6,9 +6,12 @@ import {
 } from "../components/Messages"
 import { ChatInput } from "../components/ChatInput"
 import type { Chat, Message } from '@/types';
-// import { queryClient } from "@/AppContext";
+import { AppContext } from "@/AppContext";
+import { useContext } from "react";
+import { queryClient } from "@/AppContext";
 
 export function ChatView(): React.JSX.Element {
+    const ctx = useContext(AppContext);
     const { chatId } = useParams<{ chatId: string }>();
 
     const { data: messages, isLoading: areMessagesLoading, isError: isMessagesError } = useQuery<Message[]>({
@@ -33,6 +36,21 @@ export function ChatView(): React.JSX.Element {
         },
     });
 
+    const onMessageSent = async (message: string) => {
+        queryClient.setQueryData(["conversation", chatId], (oldMessages: Message[] | undefined) => [
+            ...(oldMessages ?? []),
+            { role: "user", content: message },
+        ]);
+        await fetch(`/api/chats/${chatId}/messages`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ content: message }),
+        }).catch((error) => {
+            console.error("Error sending message:", error)
+        })
+    }
 
     return (
         <div className="flex flex-col h-screen min-w-0 flex-1">
@@ -59,7 +77,7 @@ export function ChatView(): React.JSX.Element {
 
             <footer className="shrink-0 px-4 py-2 border-t">
                 <div className="max-w-4xl min-w-0 mx-auto h-full px-4">
-                    <ChatInput onMessageSent={null} />
+                    <ChatInput onMessageSent={onMessageSent} />
                 </div>
             </footer>
         </div>

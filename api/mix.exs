@@ -51,6 +51,8 @@ defmodule Api.MixProject do
       {:bandit, "~> 1.5"},
       {:bcrypt_elixir, "~> 3.0"},
       {:joken, "~> 2.6.2"},
+      {:oban, "~> 2.17"},
+      {:igniter, "~> 0.6", only: [:dev, :test]}
     ]
   end
 

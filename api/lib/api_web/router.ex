@@ -31,6 +31,7 @@ defmodule ApiWeb.Router do
     get("/", Controllers.ChatController, :get_chats)
     get("/:chat_id", Controllers.ChatController, :get_chat)
     get("/:chat_id/messages", Controllers.ChatController, :get_chat_messages)
+    post("/:chat_id/messages", Controllers.ChatController, :send_message)
   end
 
   if Application.compile_env(:api, :dev_routes) do
