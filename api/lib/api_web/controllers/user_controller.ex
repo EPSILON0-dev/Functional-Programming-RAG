@@ -7,7 +7,8 @@ defmodule ApiWeb.Controllers.UserController do
 
   defp gen_user_token(user) do
     ApiWeb.Token.generate_and_sign!(%{
-      "user_id" => user.id
+      "user_id" => user.id,
+      "exp" => System.os_time(:second) + ApiWeb.Token.max_age()
     })
   end
 
@@ -40,7 +41,9 @@ defmodule ApiWeb.Controllers.UserController do
           if Bcrypt.verify_pass(password, user.password) do
             conn
             |> put_status(:ok)
-            |> put_resp_cookie("authorization", "Bearer #{gen_user_token(user)}", max_age: 600)
+            |> put_resp_cookie("authorization", "Bearer #{gen_user_token(user)}",
+              max_age: ApiWeb.Token.max_age()
+            )
             |> json(%{id: user.id, username: user.username})
           else
             conn |> put_status(:unauthorized) |> json(%{error: "Invalid password"})

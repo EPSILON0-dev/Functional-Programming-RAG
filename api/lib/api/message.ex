@@ -28,7 +28,7 @@ defmodule Api.Message do
       :provider_metadata,
       :usage_metadata
     ])
-    |> validate_required([:content, :role, :chat_id, :author_id])
+    |> validate_required([:content, :role, :chat_id])
     |> assoc_constraint(:author)
     |> assoc_constraint(:chat)
   end

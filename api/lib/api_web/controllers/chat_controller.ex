@@ -12,7 +12,7 @@ defmodule ApiWeb.Controllers.ChatController do
            "author_id" => conn.assigns[:user_id]
          },
          {:ok, _message} <- Api.Message.new_message(message_params) do
-      %{} |> Api.Workers.StubJob.new() |> Oban.insert()
+      message_params |> Api.Workers.StubJob.new() |> Oban.insert()
       conn |> put_status(:ok) |> json(%{id: chat.id, name: chat.name})
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to create chat"})
@@ -28,7 +28,7 @@ defmodule ApiWeb.Controllers.ChatController do
     }
 
     with {:ok, _message} <- Api.Message.new_message(message_params) do
-      %{} |> Api.Workers.StubJob.new() |> Oban.insert()
+      message_params |> Api.Workers.StubJob.new() |> Oban.insert()
       conn |> put_status(:ok) |> json(%{status: "Message sent"})
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to send message"})

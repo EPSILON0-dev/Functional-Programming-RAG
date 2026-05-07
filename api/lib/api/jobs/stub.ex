@@ -9,6 +9,18 @@ defmodule Api.Workers.StubJob do
     IO.puts("StubJob 50% complete")
     :timer.sleep(2000)
     IO.puts("StubJob completed")
-    :ok
+
+    message_params = %{
+      "content" => "This is a stub response to the message: \"#{args["content"]}\"",
+      "role" => "assistant",
+      "chat_id" => args["chat_id"],
+      "author_id" => nil
+    }
+
+    with {:ok, _message} <- Api.Message.new_message(message_params) do
+      :ok
+    else
+      :error -> :error
+    end
   end
 end

@@ -1,4 +1,4 @@
-import { createContext, useEffect, useReducer } from "react";
+import { createContext, use, useContext, useEffect, useReducer } from "react";
 import type { NamedIdentifier } from "./types";
 import { QueryClient } from "@tanstack/react-query";
 import { authGetCurrentUser, authLogout, type AuthUser } from "./lib/auth";
@@ -34,6 +34,7 @@ type Action =
     | { type: "LOGIN"; payload: AuthUser }
     | { type: "LOGOUT" }
     | { type: "UPDATE_USERNAME"; payload: string };
+
 
 function reducer(state: AppState, action: Action): AppState {
     switch (action.type) {
@@ -80,25 +81,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
     }, [state.theme]);
 
-    const fetchConversations = async () => {
-        const chatsResp = await fetch("/api/chats/");
-        const conversations: NamedIdentifier[] = await chatsResp.json();
-        dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
-    }
-
-    const fetchDatabases = async () => {
-        const databasesResp = await fetch("/api/databases/");
-        const databases: NamedIdentifier[] = await databasesResp.json();
-        dispatch({ type: "SET_DATABASES", payload: databases });
-    }
-
     useEffect(() => {
-        async function initialLoad() {
-            fetchConversations();
-            fetchDatabases();
-        };
-        initialLoad();
-    }, []);
+        if (state.currentUser) {
+            const fetchConversationsOnLogin = async () => {
+                const chatsResp = await fetch("/api/chats/");
+                const conversations: NamedIdentifier[] = await chatsResp.json();
+                dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
+            };
+
+            const fetchDatabasesOnLogin = async () => {
+                const databasesResp = await fetch("/api/databases/");
+                const databases: NamedIdentifier[] = await databasesResp.json();
+                dispatch({ type: "SET_DATABASES", payload: databases });
+            };
+
+            fetchConversationsOnLogin();
+            fetchDatabasesOnLogin();
+        }
+    }, [state.currentUser]);
 
     return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
 }
