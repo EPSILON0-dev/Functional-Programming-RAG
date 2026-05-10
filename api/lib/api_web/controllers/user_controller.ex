@@ -8,7 +8,17 @@ defmodule ApiWeb.Controllers.UserController do
   defp gen_user_token(user) do
     ApiWeb.Token.generate_and_sign!(%{
       "user_id" => user.id,
+      "ws" => false,
       "exp" => System.os_time(:second) + ApiWeb.Token.max_age()
+    })
+  end
+
+  defp gen_user_ws_token(user) do
+    ApiWeb.Token.generate_and_sign!(%{
+      "user_id" => user.id,
+      "ws" => true,
+      # Short-lived token for WebSocket connections
+      "exp" => System.os_time(:second) + 60
     })
   end
 
@@ -60,8 +70,19 @@ defmodule ApiWeb.Controllers.UserController do
   end
 
   def me(conn, _) do
-    with user when not is_nil(user) <- Api.User.get_user_by_id(conn.assigns[:user_id]) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         user when not is_nil(user) <- Api.User.get_user_by_id(user_id) do
       conn |> put_status(:ok) |> json(%{id: user.id, username: user.username})
+    else
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
+
+  def wstoken(conn, _) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         user when not is_nil(user) <- Api.User.get_user_by_id(user_id) do
+      token = gen_user_ws_token(user)
+      conn |> put_status(:ok) |> json(%{token: token})
     else
       _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
     end

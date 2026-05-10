@@ -2,6 +2,7 @@ import { createContext, use, useContext, useEffect, useReducer } from "react";
 import type { NamedIdentifier } from "./types";
 import { QueryClient } from "@tanstack/react-query";
 import { authGetCurrentUser, authLogout, type AuthUser } from "./lib/auth";
+import { WebSocketManager } from "./hooks/useWebSocket";
 
 type Theme = "light" | "dark";
 
@@ -10,6 +11,7 @@ const storedTheme = (localStorage.getItem("theme") as Theme | null) ?? "light";
 const initialState: AppState = {
     chats: null,
     databases: null,
+    websocket: null,
     connectionError: false,
     selectedDatabase: null,
     theme: storedTheme,
@@ -19,6 +21,7 @@ const initialState: AppState = {
 interface AppState {
     chats: NamedIdentifier[] | null;
     databases: NamedIdentifier[] | null;
+    websocket: WebSocketManager | null;
     connectionError: boolean;
     selectedDatabase: NamedIdentifier | null;
     theme: Theme;
@@ -26,6 +29,7 @@ interface AppState {
 }
 
 type Action =
+    | { type: "SET_WEBSOCKET"; payload: WebSocketManager }
     | { type: "SET_CONVERSATIONS"; payload: NamedIdentifier[] }
     | { type: "SET_DATABASES"; payload: NamedIdentifier[] }
     | { type: "CONNECTION_ERROR" }
@@ -38,6 +42,8 @@ type Action =
 
 function reducer(state: AppState, action: Action): AppState {
     switch (action.type) {
+        case "SET_WEBSOCKET":
+            return { ...state, websocket: action.payload };
         case "SET_CONVERSATIONS":
             return { ...state, chats: action.payload };
         case "SET_DATABASES":
@@ -96,9 +102,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             };
 
             fetchConversationsOnLogin();
-            fetchDatabasesOnLogin();
+            // fetchDatabasesOnLogin();
         }
     }, [state.currentUser]);
+
+    useEffect(() => {
+        if (state.currentUser) {
+            const wsManager = new WebSocketManager(state.currentUser.id);
+            dispatch({ type: "SET_WEBSOCKET", payload: wsManager });
+            return () => { wsManager.disconnect(); };
+        }
+    }, [state.currentUser?.id]);
 
     return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
 }

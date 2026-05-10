@@ -7,21 +7,22 @@ defmodule ApiWeb.Router do
 
   pipeline :auth_api do
     plug(:accepts, ["json"])
-    plug(ApiWeb.Auth, :authenticate_user)
+    plug(ApiWeb.Auth, :authenticate_conn)
   end
 
-  scope "/api/users", ApiWeb do
-    pipe_through(:api)
-
-    post("/register", Controllers.UserController, :register)
-    post("/auth", Controllers.UserController, :auth)
-    post("/logout", Controllers.UserController, :logout)
-  end
-
-  scope "/api/users", ApiWeb do
+  scope "/api/auth", ApiWeb do
     pipe_through(:auth_api)
 
     get("/me", Controllers.UserController, :me)
+    get("/wstoken", Controllers.UserController, :wstoken)
+  end
+
+  scope "/api/auth", ApiWeb do
+    pipe_through(:api)
+
+    post("/", Controllers.UserController, :auth)
+    post("/register", Controllers.UserController, :register)
+    post("/logout", Controllers.UserController, :logout)
   end
 
   scope "/api/chats", ApiWeb do

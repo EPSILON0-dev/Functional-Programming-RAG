@@ -18,6 +18,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/websocket': {
+        target: 'ws://localhost:4000',
+        ws: true,
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:4000',
         changeOrigin: true,

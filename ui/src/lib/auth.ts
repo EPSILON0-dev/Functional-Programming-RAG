@@ -6,7 +6,7 @@ export interface AuthUser {
 export async function authRegister(username: string, password: string):
     Promise<{ success: boolean; user?: AuthUser; error?: string }> {
 
-    return await fetch("/api/users/register", {
+    return await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -28,7 +28,7 @@ export async function authRegister(username: string, password: string):
 export async function authLogin(username: string, password: string):
     Promise<{ success: boolean; user?: AuthUser; error?: string }> {
 
-    return await fetch("/api/users/auth", {
+    return await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -48,7 +48,7 @@ export async function authLogin(username: string, password: string):
 }
 
 export async function authGetCurrentUser(): Promise<AuthUser | null> {
-    return await fetch("/api/users/me", {
+    return await fetch("/api/auth/me", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
     }).then(async (response) => {
@@ -64,7 +64,7 @@ export async function authGetCurrentUser(): Promise<AuthUser | null> {
 }
 
 export function authLogout(): void {
-    fetch("/api/users/logout", {
+    fetch("/api/auth/logout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
     }).catch((error) => {

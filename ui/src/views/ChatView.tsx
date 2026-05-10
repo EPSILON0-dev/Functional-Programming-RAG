@@ -7,7 +7,7 @@ import {
 import { ChatInput } from "../components/ChatInput"
 import type { Chat, Message } from '@/types';
 import { AppContext } from "@/AppContext";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { queryClient } from "@/AppContext";
 
 export function ChatView(): React.JSX.Element {
