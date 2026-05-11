@@ -1,19 +1,35 @@
 defmodule ApiWeb.Controllers.ChatController do
   use ApiWeb, :controller
 
-  def new_chat(conn, %{"first_message" => message}) do
+  defp message_convert(message) do
+    %{
+      id: message.id,
+      content: message.content,
+      role: message.role,
+      chat_id: message.chat_id,
+      author_id: message.author_id,
+      timestamp: message.inserted_at
+    }
+  end
+
+  def new_chat(conn, %{"first_message" => first_message}) do
     chat_params = %{"name" => "New Chat", "author_id" => conn.assigns[:user_id]}
 
     with {:ok, chat} <- Api.Chat.new_chat(chat_params),
          message_params = %{
-           "content" => message,
-           "role" => "user",
-           "chat_id" => chat.id,
-           "author_id" => conn.assigns[:user_id]
+           content: first_message,
+           role: "user",
+           chat_id: chat.id,
+           author_id: conn.assigns[:user_id]
          },
-         {:ok, _message} <- Api.Message.new_message(message_params) do
-      message_params |> Api.Workers.StubJob.new() |> Oban.insert()
-      conn |> put_status(:ok) |> json(%{id: chat.id, name: chat.name})
+         {:ok, message} <- Api.Message.new_message(message_params) do
+      message_convert(message)
+      |> Api.Workers.GenerateResponseJob.new()
+      |> Oban.insert()
+
+      conn
+      |> put_status(:ok)
+      |> json(%{chat: %{id: chat.id, name: chat.name}, message: message_convert(message)})
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to create chat"})
     end
@@ -21,15 +37,25 @@ defmodule ApiWeb.Controllers.ChatController do
 
   def send_message(conn, %{"chat_id" => chat_id, "content" => content}) do
     message_params = %{
-      "content" => content,
-      "role" => "user",
-      "chat_id" => chat_id,
-      "author_id" => conn.assigns[:user_id]
+      content: content,
+      role: "user",
+      chat_id: chat_id,
+      author_id: conn.assigns[:user_id]
     }
 
-    with {:ok, _message} <- Api.Message.new_message(message_params) do
-      message_params |> Api.Workers.StubJob.new() |> Oban.insert()
-      conn |> put_status(:ok) |> json(%{status: "Message sent"})
+    with {:ok, message} <- Api.Message.new_message(message_params) do
+      message_convert(message)
+      |> Api.Workers.GenerateResponseJob.new()
+      |> Oban.insert()
+
+      conn
+      |> put_status(:ok)
+      |> json(%{
+        id: message.id,
+        content: message.content,
+        role: message.role,
+        timestamp: message.inserted_at
+      })
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to send message"})
     end

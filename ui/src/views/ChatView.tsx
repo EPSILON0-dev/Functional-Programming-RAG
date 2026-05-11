@@ -2,28 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import {
     AssistantMessage,
+    GeneratingMessage,
     UserMessage,
 } from "../components/Messages"
 import { ChatInput } from "../components/ChatInput"
-import type { Chat, Message } from '@/types';
+import type { Chat } from '@/types';
 import { AppContext } from "@/AppContext";
 import { useContext, useEffect } from "react";
-import { queryClient } from "@/AppContext";
 
 export function ChatView(): React.JSX.Element {
     const ctx = useContext(AppContext);
     const { chatId } = useParams<{ chatId: string }>();
-
-    const { data: messages, isLoading: areMessagesLoading, isError: isMessagesError } = useQuery<Message[]>({
-        queryKey: ["conversation", chatId],
-        queryFn: async () => {
-            const response = await fetch(`/api/chats/${chatId}/messages`);
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
-            }
-            return response.json();
-        },
-    });
 
     const { data: chat, isLoading: isChatLoading, isError: isChatError } = useQuery<Chat>({
         queryKey: ["chat", chatId],
@@ -36,17 +25,37 @@ export function ChatView(): React.JSX.Element {
         },
     });
 
+    useEffect(() => {
+        if (!chatId) return;
+
+        const fetchMessages = async () => {
+            const response = await fetch(`/api/chats/${chatId}/messages`);
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            const messages = await response.json();
+            ctx?.dispatch({ type: "SET_MESSAGES", payload: { chatId, messages } });
+        };
+
+        fetchMessages();
+    }, [chatId]);
+
+    const messages = chatId ? ctx?.state.messages[chatId] : undefined;
+
     const onMessageSent = async (message: string) => {
-        queryClient.setQueryData(["conversation", chatId], (oldMessages: Message[] | undefined) => [
-            ...(oldMessages ?? []),
-            { role: "user", content: message },
-        ]);
+        if (!chatId) return;
+
         await fetch(`/api/chats/${chatId}/messages`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({ content: message }),
+        }).then((response) => response.json()).then((message) => {
+            ctx?.dispatch({
+                type: "ADD_MESSAGE",
+                payload: { chatId, message },
+            });
         }).catch((error) => {
             console.error("Error sending message:", error)
         })
@@ -67,8 +76,10 @@ export function ChatView(): React.JSX.Element {
                         <div key={index}>
                             {item.role === "user" ? (
                                 <UserMessage message={item.content} />
-                            ) : (
+                            ) : item.role === "assistant" ? (
                                 <AssistantMessage message={item.content} />
+                            ) : (
+                                <GeneratingMessage />
                             )}
                         </div>
                     ))}

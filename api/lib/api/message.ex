@@ -28,7 +28,7 @@ defmodule Api.Message do
       :provider_metadata,
       :usage_metadata
     ])
-    |> validate_required([:content, :role, :chat_id])
+    |> validate_required([:role, :chat_id])
     |> assoc_constraint(:author)
     |> assoc_constraint(:chat)
   end
@@ -37,6 +37,18 @@ defmodule Api.Message do
     %__MODULE__{}
     |> changeset(attrs)
     |> Api.Repo.insert()
+  end
+
+  def update_message(id, attrs) do
+    case Api.Repo.get(__MODULE__, id) do
+      nil ->
+        {:error, "Message not found"}
+
+      message ->
+        message
+        |> changeset(attrs)
+        |> Api.Repo.update()
+    end
   end
 
   # TODO offset limit

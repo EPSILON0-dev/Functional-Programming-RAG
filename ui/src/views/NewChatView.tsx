@@ -20,10 +20,11 @@ export function NewChatView(): React.JSX.Element {
         })
 
         if (response && response.ok) {
-            const { id, name } = await response.json();
+            const { chat, message } = await response.json();
+            const { id } = chat;
             navigate(`/chat/${id}`);
-            const payload = [...(ctx?.state.chats ?? []), { id, name }];
-            ctx?.dispatch({ type: "SET_CONVERSATIONS", payload: payload });
+            const payload = { chatId: id, messages: [message] };
+            ctx?.dispatch({ type: "SET_MESSAGES", payload: payload });
         } else {
             console.error("Failed to start new chat");
         }

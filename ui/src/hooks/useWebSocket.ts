@@ -1,16 +1,20 @@
-// TODO unslopify
+import { AppContext } from "@/AppContext";
+import React, { useContext } from "react";
 
 export class WebSocketManager {
   private ws: WebSocket | null = null;
   private userId: string;
+  private dispatch: React.Dispatch<any> = () => { };
   private reconnectAttempts = 0;
   private reconnectTimeout: number | null = null;
   private intentionallyClosed = false;
+  private readonly heartbeatInterval = 30000; // 30 seconds
   private readonly maxReconnectDelay = 30000; // 30 seconds
   private readonly initialReconnectDelay = 1000; // 1 second
 
-  constructor(userId: string) {
+  constructor(userId: string, dispatch: React.Dispatch<any>) {
     this.userId = userId;
+    this.dispatch = dispatch;
     this.connect();
   }
 
@@ -36,7 +40,6 @@ export class WebSocketManager {
       this.reconnectAttempts = 0;
 
       // Join the user channel
-      // TODO don't do this
       this.ws?.send(JSON.stringify({
         topic: `user:${this.userId}`,
         event: "phx_join",
@@ -45,6 +48,8 @@ export class WebSocketManager {
         },
         ref: Math.random().toString(),
       }));
+
+      this.heartbeatLoop();
     };
 
     this.ws.onmessage = (event) => {
@@ -52,7 +57,18 @@ export class WebSocketManager {
 
       // Handle incoming messages
       if (message.event === "response_complete") {
-        console.log("Got response:", message.payload.content);
+        this.dispatch({
+          type: "ADD_MESSAGE",
+          payload: {
+            chatId: message.payload.chat_id,
+            message: {
+              id: message.payload.id,
+              role: message.payload.role,
+              content: message.payload.content,
+              timestamp: message.payload.timestamp,
+            }
+          }
+        });
       }
     };
 
@@ -88,13 +104,21 @@ export class WebSocketManager {
     }, delay);
   }
 
-  public subscribeToJob(chatId: string) {
+  private async heartbeatLoop() {
+    await new Promise(resolve => setTimeout(resolve, this.heartbeatInterval));
+    while (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.sendHeartbeat();
+      await new Promise(resolve => setTimeout(resolve, this.heartbeatInterval));
+    }
+  }
+
+  private sendHeartbeat() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({
-        topic: `user:${this.userId}`,
-        event: "subscribe_job",
-        payload: { chat_id: chatId },
-        ref: Math.random().toString()
+        topic: "phoenix",
+        event: "heartbeat",
+        payload: {},
+        ref: Math.random().toString(),
       }));
     }
   }
@@ -111,6 +135,6 @@ export class WebSocketManager {
   }
 }
 
-export function createWebSocketManager(userId: string) {
-  return new WebSocketManager(userId);
+export function createWebSocketManager(userId: string, dispatch: React.Dispatch<any>) {
+  return new WebSocketManager(userId, dispatch);
 }

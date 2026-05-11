@@ -1,5 +1,5 @@
 import { createContext, use, useContext, useEffect, useReducer } from "react";
-import type { NamedIdentifier } from "./types";
+import type { Message, NamedIdentifier } from "./types";
 import { QueryClient } from "@tanstack/react-query";
 import { authGetCurrentUser, authLogout, type AuthUser } from "./lib/auth";
 import { WebSocketManager } from "./hooks/useWebSocket";
@@ -16,6 +16,7 @@ const initialState: AppState = {
     selectedDatabase: null,
     theme: storedTheme,
     currentUser: await authGetCurrentUser(),
+    messages: {},
 };
 
 interface AppState {
@@ -26,6 +27,7 @@ interface AppState {
     selectedDatabase: NamedIdentifier | null;
     theme: Theme;
     currentUser: AuthUser | null;
+    messages: Record<string, Message[]>;
 }
 
 type Action =
@@ -37,10 +39,14 @@ type Action =
     | { type: "TOGGLE_THEME" }
     | { type: "LOGIN"; payload: AuthUser }
     | { type: "LOGOUT" }
-    | { type: "UPDATE_USERNAME"; payload: string };
+    | { type: "UPDATE_USERNAME"; payload: string }
+    | { type: "SET_MESSAGES"; payload: { chatId: string; messages: Message[] } }
+    | { type: "ADD_MESSAGE"; payload: { chatId: string; message: Message } };
 
 
 function reducer(state: AppState, action: Action): AppState {
+    console.log("Dispatching action:", action);
+
     switch (action.type) {
         case "SET_WEBSOCKET":
             return { ...state, websocket: action.payload };
@@ -66,6 +72,35 @@ function reducer(state: AppState, action: Action): AppState {
             return state.currentUser
                 ? { ...state, currentUser: { ...state.currentUser, username: action.payload } }
                 : state;
+        case "SET_MESSAGES":
+            return {
+                ...state, messages: {
+                    ...state.messages, [action.payload.chatId]:
+                        action.payload.messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                }
+            };
+        case "ADD_MESSAGE":
+            if (state.messages[action.payload.chatId]?.some((msg) => msg.id === action.payload.message.id)) {
+                return {
+                    ...state,
+                    messages: {
+                        ...state.messages,
+                        [action.payload.chatId]: state.messages[action.payload.chatId].map((msg) =>
+                            msg.id === action.payload.message.id ? action.payload.message : msg
+                        ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+                    },
+                };
+            }
+            return {
+                ...state,
+                messages: {
+                    ...state.messages,
+                    [action.payload.chatId]: [
+                        ...(state.messages[action.payload.chatId] ?? []),
+                        action.payload.message,
+                    ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+                },
+            };
         default:
             return state;
     }
@@ -108,7 +143,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (state.currentUser) {
-            const wsManager = new WebSocketManager(state.currentUser.id);
+            const wsManager = new WebSocketManager(state.currentUser.id, dispatch);
             dispatch({ type: "SET_WEBSOCKET", payload: wsManager });
             return () => { wsManager.disconnect(); };
         }
