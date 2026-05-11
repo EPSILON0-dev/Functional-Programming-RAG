@@ -89,7 +89,7 @@ defmodule ApiWeb.Controllers.ChatController do
     chat_id = params["chat_id"]
 
     messages =
-      Api.Message.get_chat_messages(chat_id, limit, offset)
+      Api.Message.get_chat_messages(chat_id)
       |> Enum.map(
         &%{
           id: &1.id,

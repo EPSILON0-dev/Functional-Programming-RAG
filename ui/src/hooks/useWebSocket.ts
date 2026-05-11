@@ -56,7 +56,8 @@ export class WebSocketManager {
       const message = JSON.parse(event.data);
 
       // Handle incoming messages
-      if (message.event === "response_complete") {
+      if (message.event === "response_complete" || message.event === "response_new") {
+        console.log("Received message:", message);
         this.dispatch({
           type: "ADD_MESSAGE",
           payload: {
@@ -64,7 +65,7 @@ export class WebSocketManager {
             message: {
               id: message.payload.id,
               role: message.payload.role,
-              content: message.payload.content,
+              content: message.payload.content || "",
               timestamp: message.payload.timestamp,
             }
           }

@@ -7,20 +7,22 @@ defmodule Api.Workers.GenerateResponseJob do
   # Message sent via the socket will be read as generating
   # When the generation is complete, the message will be updated
 
-  defp query_openrouter(query, model, props) do
+  defp query_openrouter(messages, model, props) do
     # Hardcoding :D
     config = %{
       openrouter_api_url: System.get_env("OPENROUTER_API_URL") || "https://openrouter.ai/api/v1",
       openrouter_api_key: System.get_env("OPENROUTER_API_KEY") || "sk-xxx"
     }
 
+    query_params = Map.merge(%{messages: messages, model: model}, props)
+
     case Req.post(
-           url: config.openrouter_api_url <> "/responses",
+           url: config.openrouter_api_url <> "/chat/completions",
            headers: [
              Authorization: "Bearer " <> config.openrouter_api_key,
              "Content-Type": "application/json"
            ],
-           json: Map.merge(%{input: query, model: model}, props)
+           json: query_params
          ) do
       {:ok, resp} ->
         if resp.status == 200 do
@@ -57,20 +59,31 @@ defmodule Api.Workers.GenerateResponseJob do
     })
   end
 
+  defp get_conversation_history(chat_id) do
+    messages =
+      Api.Message.get_chat_messages(chat_id)
+      |> Enum.filter(fn message -> message.role in ["user", "assistant"] end)
+      |> Enum.sort_by(& &1.inserted_at)
+      |> Enum.map(
+        &%{
+          role: &1.role,
+          content: &1.content
+        }
+      )
+
+    {:ok, messages}
+  end
+
   defp generate_response(args) do
-    case query_openrouter(args["content"], "gpt-4.1-mini", %{}) do
-      {:ok, response} ->
-        {:ok,
-         response
-         |> Map.get("output")
-         |> List.first()
-         |> Map.get("content")
-         |> List.first()
-         |> Map.get("text")}
-
-      {:error, reason} ->
-        {:error, reason}
-
+    with {:ok, conversation_history} <- get_conversation_history(args["chat_id"]),
+         {:ok, response} <- query_openrouter(conversation_history, "gpt-4.1-mini", %{}) do
+      {:ok,
+       response
+       |> Map.get("choices")
+       |> List.first()
+       |> Map.get("message")
+       |> Map.get("content")}
+    else
       _ ->
         {:error, "Failed to generate response"}
     end
