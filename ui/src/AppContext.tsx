@@ -1,8 +1,8 @@
-import { createContext, use, useContext, useEffect, useReducer } from "react";
+import { createContext, useEffect, useReducer } from "react";
 import type { Message, NamedIdentifier } from "./types";
 import { QueryClient } from "@tanstack/react-query";
 import { authGetCurrentUser, authLogout, type AuthUser } from "./lib/auth";
-import { WebSocketManager } from "./hooks/useWebSocket";
+import { WebSocketManager } from "./lib/ws";
 
 type Theme = "light" | "dark";
 
@@ -10,7 +10,6 @@ const storedTheme = (localStorage.getItem("theme") as Theme | null) ?? "light";
 
 const initialState: AppState = {
     chats: null,
-    databases: null,
     websocket: null,
     connectionError: false,
     selectedDatabase: null,
@@ -21,7 +20,6 @@ const initialState: AppState = {
 
 interface AppState {
     chats: NamedIdentifier[] | null;
-    databases: NamedIdentifier[] | null;
     websocket: WebSocketManager | null;
     connectionError: boolean;
     selectedDatabase: NamedIdentifier | null;
@@ -33,82 +31,84 @@ interface AppState {
 type Action =
     | { type: "SET_WEBSOCKET"; payload: WebSocketManager }
     | { type: "SET_CONVERSATIONS"; payload: NamedIdentifier[] }
-    | { type: "SET_DATABASES"; payload: NamedIdentifier[] }
-    | { type: "CONNECTION_ERROR" }
-    | { type: "SELECT_DATABASE"; payload: NamedIdentifier }
+    | { type: "ADD_CONVERSATION"; payload: NamedIdentifier }
     | { type: "TOGGLE_THEME" }
     | { type: "LOGIN"; payload: AuthUser }
     | { type: "LOGOUT" }
-    | { type: "UPDATE_USERNAME"; payload: string }
     | { type: "SET_MESSAGES"; payload: { chatId: string; messages: Message[] } }
     | { type: "ADD_MESSAGE"; payload: { chatId: string; message: Message } };
 
+function toggleTheme(state: AppState): AppState {
+    const next: Theme = state.theme === "light" ? "dark" : "light";
+    localStorage.setItem("theme", next);
+    return { ...state, theme: next };
+}
+
+function compareMessageDates(a: Message, b: Message): number {
+    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+}
+
+function setMessages(state: AppState, chatId: string, messages: Message[]): AppState {
+    return {
+        ...state, messages: {
+            ...state.messages, [chatId]: messages.sort(compareMessageDates)
+        }
+    };
+}
+
+function addMessage(state: AppState, chatId: string, message: Message): AppState {
+    if (state.messages[chatId]?.some((msg) => msg.id === message.id)) {
+        return {
+            ...state,
+            messages: {
+                ...state.messages,
+                [chatId]: state.messages[chatId].map((msg) =>
+                    msg.id === message.id ? message : msg
+                ).sort(compareMessageDates),
+            },
+        };
+    }
+    else {
+        return {
+            ...state,
+            messages: {
+                ...state.messages,
+                [chatId]: [
+                    ...(state.messages[chatId] ?? []),
+                    message,
+                ].sort(compareMessageDates),
+            },
+        };
+    }
+}
+
+const fetchConversations = async (dispatch: React.Dispatch<Action>) => {
+    const conversations: NamedIdentifier[] = await (await fetch("/api/chats/")).json();
+    dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
+};
 
 function reducer(state: AppState, action: Action): AppState {
-    console.log("Dispatching action:", action);
-
     switch (action.type) {
-        case "SET_WEBSOCKET":
-            return { ...state, websocket: action.payload };
-        case "SET_CONVERSATIONS":
-            return { ...state, chats: action.payload };
-        case "SET_DATABASES":
-            return { ...state, databases: action.payload };
-        case "CONNECTION_ERROR":
-            return { ...state, connectionError: true };
-        case "SELECT_DATABASE":
-            return { ...state, selectedDatabase: action.payload };
-        case "TOGGLE_THEME": {
-            const next: Theme = state.theme === "light" ? "dark" : "light";
-            localStorage.setItem("theme", next);
-            return { ...state, theme: next };
-        }
-        case "LOGIN":
-            return { ...state, currentUser: action.payload };
-        case "LOGOUT":
-            authLogout();
-            return { ...state, currentUser: null };
-        case "UPDATE_USERNAME":
-            return state.currentUser
-                ? { ...state, currentUser: { ...state.currentUser, username: action.payload } }
-                : state;
-        case "SET_MESSAGES":
-            return {
-                ...state, messages: {
-                    ...state.messages, [action.payload.chatId]:
-                        action.payload.messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-                }
-            };
-        case "ADD_MESSAGE":
-            if (state.messages[action.payload.chatId]?.some((msg) => msg.id === action.payload.message.id)) {
-                return {
-                    ...state,
-                    messages: {
-                        ...state.messages,
-                        [action.payload.chatId]: state.messages[action.payload.chatId].map((msg) =>
-                            msg.id === action.payload.message.id ? action.payload.message : msg
-                        ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-                    },
-                };
-            }
-            return {
-                ...state,
-                messages: {
-                    ...state.messages,
-                    [action.payload.chatId]: [
-                        ...(state.messages[action.payload.chatId] ?? []),
-                        action.payload.message,
-                    ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-                },
-            };
-        default:
-            return state;
+        case "SET_WEBSOCKET": return { ...state, websocket: action.payload };
+
+        case "SET_CONVERSATIONS": return { ...state, chats: action.payload };
+        case "ADD_CONVERSATION": return { ...state, chats: [...(state.chats ?? []), action.payload] };
+
+        case "TOGGLE_THEME": return toggleTheme(state);
+
+        case "LOGIN": return { ...state, currentUser: action.payload };
+        case "LOGOUT": { authLogout(); return { ...state, currentUser: null }; }
+
+        case "SET_MESSAGES": return setMessages(state, action.payload.chatId, action.payload.messages);
+        case "ADD_MESSAGE": return addMessage(state, action.payload.chatId, action.payload.message);
+
+        default: return state;
     }
 }
 
 export const queryClient = new QueryClient()
-
 export const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | undefined>(undefined);
+
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
@@ -122,25 +122,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
     }, [state.theme]);
 
+    // Conversation fetching effect 
     useEffect(() => {
-        if (state.currentUser) {
-            const fetchConversationsOnLogin = async () => {
-                const chatsResp = await fetch("/api/chats/");
-                const conversations: NamedIdentifier[] = await chatsResp.json();
-                dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
-            };
-
-            const fetchDatabasesOnLogin = async () => {
-                const databasesResp = await fetch("/api/databases/");
-                const databases: NamedIdentifier[] = await databasesResp.json();
-                dispatch({ type: "SET_DATABASES", payload: databases });
-            };
-
-            fetchConversationsOnLogin();
-            // fetchDatabasesOnLogin();
-        }
+        if (state.currentUser) fetchConversations(dispatch);
     }, [state.currentUser]);
 
+    // WebSocket effect
     useEffect(() => {
         if (state.currentUser) {
             const wsManager = new WebSocketManager(state.currentUser.id, dispatch);

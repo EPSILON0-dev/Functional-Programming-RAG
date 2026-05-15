@@ -84,8 +84,6 @@ defmodule ApiWeb.Controllers.ChatController do
   end
 
   def get_chat_messages(conn, params) do
-    limit = params["limit"] || 20
-    offset = params["offset"] || 0
     chat_id = params["chat_id"]
 
     messages =

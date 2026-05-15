@@ -51,8 +51,7 @@ defmodule Api.Message do
     end
   end
 
-  # TODO offset limit
-  def get_chat_messages(chat_id, limit \\ 20, offset \\ 0) do
+  def get_chat_messages(chat_id) do
     Api.Repo.all_by(__MODULE__, chat_id: chat_id)
   end
 end
