@@ -25,6 +25,30 @@ defmodule Api.Chat do
     |> Api.Repo.insert()
   end
 
+  def rename_by_id(chat_id, user_id, new_name) do
+    with chat <- Api.Repo.get_by(__MODULE__, id: chat_id, author_id: user_id),
+         false <- is_nil(chat),
+         true <- is_nil(chat.deleted_at) do
+      chat
+      |> changeset(%{name: new_name})
+      |> Api.Repo.update()
+    else
+      _ -> {:error, "Chat not found"}
+    end
+  end
+
+  def delete_by_id(chat_id, user_id) do
+    with chat <- Api.Repo.get_by(__MODULE__, id: chat_id, author_id: user_id),
+         false <- is_nil(chat),
+         true <- is_nil(chat.deleted_at) do
+      chat
+      |> changeset(%{deleted_at: DateTime.truncate(DateTime.utc_now(), :second)})
+      |> Api.Repo.update()
+    else
+      _ -> {:error, "Chat not found"}
+    end
+  end
+
   def get_by_id(chat_id, user_id) do
     with chat <- Api.Repo.get_by(__MODULE__, id: chat_id, author_id: user_id),
          false <- is_nil(chat),

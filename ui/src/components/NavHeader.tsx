@@ -11,7 +11,6 @@ import {
 
 import {
     IconPencilPlus,
-    IconCylinderPlus,
 } from "@tabler/icons-react"
 import { useNavigate } from "react-router-dom";
 
@@ -26,14 +25,14 @@ export function NavHeader(): React.JSX.Element {
             </div>
             <SidebarSeparator className="opacity-0 mx-auto" />
             <SidebarMenu>
-                <SidebarMenuItem>
+                {/*<SidebarMenuItem>
                     <SidebarMenuButton
                         className="active:bg-secondary transition-all duration-50"
                     >
                         <IconCylinderPlus className="mr-2" />
                         <span>New Database</span>
                     </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem>*/}
                 <SidebarMenuItem>
                     <SidebarMenuButton
                         className="active:bg-secondary transition-all duration-50"

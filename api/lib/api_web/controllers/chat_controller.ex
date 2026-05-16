@@ -41,6 +41,26 @@ defmodule ApiWeb.Controllers.ChatController do
     end
   end
 
+  def rename_chat(conn, %{"chat_id" => chat_id, "new_name" => new_name}) do
+    user_id = conn.assigns[:user_id]
+
+    with {:ok, chat} <- Api.Chat.rename_by_id(chat_id, user_id, new_name) do
+      conn |> put_status(:ok) |> json(%{chat: Api.Chat.to_public(chat)})
+    else
+      _ -> conn |> put_status(:not_found) |> json(%{error: "Chat not found or access denied"})
+    end
+  end
+
+  def delete_chat(conn, %{"chat_id" => chat_id}) do
+    user_id = conn.assigns[:user_id]
+
+    with {:ok, _} <- Api.Chat.delete_by_id(chat_id, user_id) do
+      conn |> put_status(:no_content) |> json(%{message: "Chat deleted successfully"})
+    else
+      _ -> conn |> put_status(:not_found) |> json(%{error: "Chat not found or access denied"})
+    end
+  end
+
   def send_message(conn, %{"chat_id" => chat_id, "content" => content}) do
     message_params = %{
       content: content,

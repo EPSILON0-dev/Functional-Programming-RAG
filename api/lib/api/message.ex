@@ -39,6 +39,20 @@ defmodule Api.Message do
     |> Api.Repo.insert()
   end
 
+  def delete_by_chat_id(chat_id, user_id) do
+    with messages <- Api.Repo.all_by(__MODULE__, chat_id: chat_id, author_id: user_id),
+         false <- is_nil(messages),
+         true <- Enum.all?(messages, fn message -> is_nil(message.deleted_at) end) do
+      Enum.each(messages, fn message ->
+        message
+        |> change(deleted_at: DateTime.utc_now())
+        |> Api.Repo.update()
+      end)
+    else
+      _ -> {:error, "Chat not found"}
+    end
+  end
+
   def update_by_id(id, attrs) do
     case Api.Repo.get(__MODULE__, id) do
       nil ->

@@ -6,6 +6,7 @@ import { Field, FieldGroup } from "@/components/ui/field";
 import { AppContext } from "@/AppContext";
 import { authLogin, authRegister } from "@/lib/auth";
 import { IconDatabase, IconMessages, IconSearch, IconLock, IconArrowLeft } from "@tabler/icons-react";
+import { Navigate } from "react-router-dom";
 
 type Screen = "landing" | "login" | "register";
 

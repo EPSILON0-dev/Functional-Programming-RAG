@@ -16,6 +16,7 @@ const initialState: AppState = {
   theme: storedTheme,
   currentUser: await authGetCurrentUser(),
   messages: {},
+  chatRefreshCounter: 0,
 };
 
 interface AppState {
@@ -26,12 +27,14 @@ interface AppState {
   theme: Theme;
   currentUser: AuthUser | null;
   messages: Record<string, Message[]>;
+  chatRefreshCounter: number;
 }
 
 type Action =
   | { type: "SET_WEBSOCKET"; payload: WebSocketManager }
   | { type: "SET_CONVERSATIONS"; payload: Conversation[] }
   | { type: "ADD_CONVERSATION"; payload: Conversation }
+  | { type: "REFRESH_CONVERSATIONS" }
   | { type: "TOGGLE_THEME" }
   | { type: "LOGIN"; payload: AuthUser }
   | { type: "LOGOUT" }
@@ -49,7 +52,7 @@ function compareMessageDates(a: Message, b: Message): number {
 }
 
 function compareChatDates(a: Conversation, b: Conversation): number {
-  return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+  return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
 }
 
 function setMessages(state: AppState, chatId: string, messages: Message[]): AppState {
@@ -98,7 +101,6 @@ function addConversation(state: AppState, chat: Conversation): AppState {
   };
 }
 
-
 const fetchConversations = async (dispatch: React.Dispatch<Action>) => {
   const conversations: Conversation[] = await (await fetch("/api/chats/")).json();
   dispatch({ type: "SET_CONVERSATIONS", payload: conversations });
@@ -110,6 +112,7 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "SET_CONVERSATIONS": return setConversations(state, action.payload);
     case "ADD_CONVERSATION": return addConversation(state, action.payload);
+    case "REFRESH_CONVERSATIONS": return { ...state, chatRefreshCounter: state.chatRefreshCounter + 1 };
 
     case "TOGGLE_THEME": return toggleTheme(state);
 
@@ -142,7 +145,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Conversation fetching effect 
   useEffect(() => {
     if (state.currentUser) fetchConversations(dispatch);
-  }, [state.currentUser]);
+  }, [state.currentUser, state.chatRefreshCounter]);
 
   // WebSocket effect
   useEffect(() => {

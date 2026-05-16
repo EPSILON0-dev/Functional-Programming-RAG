@@ -120,7 +120,7 @@ defmodule ApiWeb.Controllers.UserController do
   def delete_api_key(conn, %{"key_id" => key_id}) do
     with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
          {:ok, _} <- Api.APIKey.delete(key_id, user_id) do
-      conn |> put_status(:ok) |> json(%{message: "API key deleted"})
+      conn |> put_status(:no_content) |> json(%{message: "API key deleted"})
     else
       _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
     end
