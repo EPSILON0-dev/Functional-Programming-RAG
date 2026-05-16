@@ -3,6 +3,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Skeleton } from "./ui/skeleton"
+import { IconAlertTriangle } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
     message: string;
@@ -33,6 +35,18 @@ export function AssistantMessage({ message }: Props): React.JSX.Element {
                 {message}
             </ReactMarkdown>
             <div className="h-16" />
+        </div>
+    )
+}
+
+export function ErrorMessage({ message }: Props): React.JSX.Element {
+    return (
+        <div>
+            <div className="outline-1 outline-destructive/50 rounded-2xl px-4 py-2 max-w-2xl mr-auto w-fit">
+                <IconAlertTriangle size="20" className="text-destructive inline-block mr-2" />
+                {message}
+            </div>
+            <div className="h-8" />
         </div>
     )
 }

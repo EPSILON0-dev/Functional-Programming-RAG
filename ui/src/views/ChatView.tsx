@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AssistantMessage,
+  ErrorMessage,
   GeneratingMessage,
   UserMessage,
 } from "../components/Messages"
@@ -125,8 +126,10 @@ export function ChatView(): React.JSX.Element {
                   <UserMessage message={item.content} />
                 ) : item.role === "assistant" ? (
                   <AssistantMessage message={item.content} />
-                ) : (
+                ) : item.role === "generating" ? (
                   <GeneratingMessage />
+                ) : (
+                  <ErrorMessage message="Response error, check your API key" />
                 )}
               </div>
             ))}

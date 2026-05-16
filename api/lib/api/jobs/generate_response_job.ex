@@ -104,15 +104,27 @@ defmodule Api.Workers.GenerateResponseJob do
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
     with {:ok, initial_message} <- create_initial_message(args["message"]),
-         :ok <- broadcast_generating_response(initial_message, args["message"]["author_id"]),
-         {:ok, response} <- generate_response(args["api_key"], args["message"]),
-         {:ok, complete_message} <-
-           Api.Message.update_by_id(initial_message.id, %{
-             content: response,
-             role: "assistant"
-           }),
-         :ok <- broadcast_response_complete(complete_message, args["message"]["author_id"]) do
-      :ok
+         :ok <- broadcast_generating_response(initial_message, args["message"]["author_id"]) do
+      with {:ok, response} <- generate_response(args["api_key"], args["message"]),
+           {:ok, complete_message} <-
+             Api.Message.update_by_id(initial_message.id, %{
+               content: response,
+               role: "assistant"
+             }),
+           :ok <- broadcast_response_complete(complete_message, args["message"]["author_id"]) do
+        :ok
+      else
+        {_, reason} ->
+          with {:ok, complete_message} <-
+                 Api.Message.update_by_id(initial_message.id, %{
+                   content: "An error occurred while generating the response.",
+                   role: "error"
+                 }) do
+            broadcast_response_complete(complete_message, args["message"]["author_id"])
+          end
+
+          {:error, reason}
+      end
     else
       {_, reason} ->
         {:error, reason}

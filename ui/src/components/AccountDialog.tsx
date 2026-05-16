@@ -10,12 +10,19 @@ import { AccountSettingsDialog } from "@/components/AccountSettings";
 import { AppContext } from "@/AppContext";
 import { IconSun, IconMoon, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { useNavigate } from "react-router-dom";
 
 export function AccountDialog() {
     const ctx = useContext(AppContext);
     const user = ctx?.state.currentUser;
     const theme = ctx?.state.theme ?? "light";
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        ctx?.dispatch({ type: "LOGOUT" });
+        navigate("/");
+    };
 
     return (
         <>
@@ -44,7 +51,7 @@ export function AccountDialog() {
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem variant="destructive" onClick={() => ctx?.dispatch({ type: "LOGOUT" })}>
+                    <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                         <IconLogout size={14} />
                         Sign Out
                     </DropdownMenuItem>

@@ -37,7 +37,7 @@ export function NewChatView(): React.JSX.Element {
         <div className="flex flex-col h-screen min-w-0 flex-1">
             <main className="m-auto max-w-4xl w-full">
                 <div className="mx-8">
-                    <h1 className="text-3xl text-center mb-12">Select the database and ask a question</h1>
+                    <h1 className="text-3xl text-center mb-12">Ask a question!</h1>
                     <ChatInput onMessageSent={startNewChat} />
                     {/*<div className="ml-2 mt-2">
                         <DatabaseDropdown />
