@@ -1,35 +1,35 @@
 defmodule ApiWeb.Controllers.ChatController do
   use ApiWeb, :controller
 
-  defp message_convert(message) do
-    %{
-      id: message.id,
-      content: message.content,
-      role: message.role,
-      chat_id: message.chat_id,
-      author_id: message.author_id,
-      timestamp: message.inserted_at
-    }
+  defp get_conversation_history(chat_id, user_id) do
+    with {:ok, messages} <- Api.Message.get_by_chat_id(chat_id, user_id) do
+      {:ok,
+       messages
+       |> Enum.sort_by(& &1.inserted_at)
+       |> Enum.map(&Api.Message.to_public/1)}
+    else
+      _ -> {:error, "Failed to retrieve conversation history"}
+    end
   end
 
   def new_chat(conn, %{"first_message" => first_message}) do
     chat_params = %{"name" => "New Chat", "author_id" => conn.assigns[:user_id]}
 
-    with {:ok, chat} <- Api.Chat.new_chat(chat_params),
+    with {:ok, chat} <- Api.Chat.new(chat_params),
          message_params = %{
            content: first_message,
            role: "user",
            chat_id: chat.id,
            author_id: conn.assigns[:user_id]
          },
-         {:ok, message} <- Api.Message.new_message(message_params) do
-      message_convert(message)
+         {:ok, message} <- Api.Message.new(message_params) do
+      Api.Message.to_public(message)
       |> Api.Workers.GenerateResponseJob.new()
       |> Oban.insert()
 
       conn
       |> put_status(:ok)
-      |> json(%{chat: %{id: chat.id, name: chat.name}, message: message_convert(message)})
+      |> json(%{chat: %{id: chat.id, name: chat.name}, message: Api.Message.to_public(message)})
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to create chat"})
     end
@@ -38,24 +38,19 @@ defmodule ApiWeb.Controllers.ChatController do
   def send_message(conn, %{"chat_id" => chat_id, "content" => content}) do
     message_params = %{
       content: content,
-      role: "user",
       chat_id: chat_id,
+      role: "user",
       author_id: conn.assigns[:user_id]
     }
 
-    with {:ok, message} <- Api.Message.new_message(message_params) do
-      message_convert(message)
+    with {:ok, message} <- Api.Message.new(message_params) do
+      Api.Message.to_public(message)
       |> Api.Workers.GenerateResponseJob.new()
       |> Oban.insert()
 
       conn
       |> put_status(:ok)
-      |> json(%{
-        id: message.id,
-        content: message.content,
-        role: message.role,
-        timestamp: message.inserted_at
-      })
+      |> json(Api.Message.to_public(message))
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to send message"})
     end
@@ -63,42 +58,40 @@ defmodule ApiWeb.Controllers.ChatController do
 
   def get_chats(conn, _params) do
     user_id = conn.assigns[:user_id]
-    chats = Api.Chat.get_user_chats(user_id)
-    conn |> put_status(:ok) |> json(chats)
+
+    conn
+    |> put_status(:ok)
+    |> json(
+      Api.Chat.get_by_user_id(user_id)
+      |> Enum.filter(fn chat -> is_nil(chat.deleted_at) end)
+      |> Enum.map(&Api.Chat.to_public/1)
+    )
   end
 
   def get_chat(conn, params) do
     chat_id = params["chat_id"]
     user_id = conn.assigns[:user_id]
 
-    db_chat = Api.Chat.get_chat_by_id(user_id, chat_id)
-
-    chat = %{
-      id: db_chat.id,
-      name: db_chat.name,
-      author_id: db_chat.author_id,
-      timestamp: db_chat.inserted_at
-    }
-
-    conn |> put_status(:ok) |> json(chat)
+    with {:ok, chat} <- Api.Chat.get_by_id(chat_id, user_id) do
+      conn
+      |> put_status(:ok)
+      |> json(Api.Chat.to_public(chat))
+    else
+      _ -> conn |> put_status(:not_found) |> json(%{error: "Chat not found"})
+    end
   end
 
   def get_chat_messages(conn, params) do
+    user_id = conn.assigns[:user_id]
     chat_id = params["chat_id"]
 
-    messages =
-      Api.Message.get_chat_messages(chat_id)
-      |> Enum.map(
-        &%{
-          id: &1.id,
-          content: &1.content,
-          role: &1.role,
-          provider_metadata: &1.provider_metadata,
-          usage_metadata: &1.usage_metadata,
-          timestamp: &1.inserted_at
-        }
-      )
-
-    conn |> put_status(:ok) |> json(messages)
+    with {:ok, messages} <- get_conversation_history(chat_id, user_id) do
+      conn |> put_status(:ok) |> json(messages)
+    else
+      _ ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Messages not found or access denied"})
+    end
   end
 end

@@ -38,7 +38,7 @@ defmodule Api.Workers.GenerateResponseJob do
 
   defp create_initial_message(args) do
     with {:ok, initial_message} <-
-           Api.Message.new_message(%{
+           Api.Message.new(%{
              "content" => "",
              "role" => "generating",
              "chat_id" => args["chat_id"],
@@ -59,23 +59,26 @@ defmodule Api.Workers.GenerateResponseJob do
     })
   end
 
-  defp get_conversation_history(chat_id) do
-    messages =
-      Api.Message.get_chat_messages(chat_id)
-      |> Enum.filter(fn message -> message.role in ["user", "assistant"] end)
-      |> Enum.sort_by(& &1.inserted_at)
-      |> Enum.map(
-        &%{
-          role: &1.role,
-          content: &1.content
-        }
-      )
-
-    {:ok, messages}
+  defp get_conversation_history(chat_id, user_id) do
+    with {:ok, messages} <- Api.Message.get_by_chat_id(chat_id, user_id) do
+      {:ok,
+       messages
+       |> Enum.filter(fn message -> message.role in ["user", "assistant"] end)
+       |> Enum.sort_by(& &1.inserted_at)
+       |> Enum.map(
+         &%{
+           role: &1.role,
+           content: &1.content
+         }
+       )}
+    else
+      _ -> {:error, "Failed to retrieve conversation history"}
+    end
   end
 
   defp generate_response(args) do
-    with {:ok, conversation_history} <- get_conversation_history(args["chat_id"]),
+    with {:ok, conversation_history} <-
+           get_conversation_history(args["chat_id"], args["author_id"]),
          {:ok, response} <- query_openrouter(conversation_history, "gpt-4.1-mini", %{}) do
       {:ok,
        response
@@ -105,7 +108,7 @@ defmodule Api.Workers.GenerateResponseJob do
          :ok <- broadcast_generating_response(initial_message, args["author_id"]),
          {:ok, response} <- generate_response(args),
          {:ok, complete_message} <-
-           Api.Message.update_message(initial_message.id, %{
+           Api.Message.update_by_id(initial_message.id, %{
              content: response,
              role: "assistant"
            }),

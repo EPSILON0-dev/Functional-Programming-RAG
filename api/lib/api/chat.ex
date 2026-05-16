@@ -19,18 +19,33 @@ defmodule Api.Chat do
     |> assoc_constraint(:author)
   end
 
-  def new_chat(attrs) do
+  def new(attrs) do
     %__MODULE__{}
     |> changeset(attrs)
     |> Api.Repo.insert()
   end
 
-  def get_chat_by_id(user_id, id) do
-    Api.Repo.get_by(__MODULE__, id: id, author_id: user_id)
+  def get_by_id(chat_id, user_id) do
+    with chat <- Api.Repo.get_by(__MODULE__, id: chat_id, author_id: user_id),
+         false <- is_nil(chat),
+         true <- is_nil(chat.deleted_at) do
+      {:ok, chat}
+    else
+      _ -> {:error, "Chat not found"}
+    end
   end
 
-  def get_user_chats(user_id) do
+  def get_by_user_id(user_id) do
     Api.Repo.all_by(__MODULE__, author_id: user_id)
-    |> Enum.map(&%{id: &1.id, name: &1.name})
+    |> Enum.filter(fn chat -> is_nil(chat.deleted_at) end)
+  end
+
+  def to_public(%__MODULE__{} = chat) do
+    %Api.ChatPublic{
+      id: chat.id,
+      name: chat.name,
+      author_id: chat.author_id,
+      timestamp: chat.inserted_at
+    }
   end
 end
