@@ -13,7 +13,10 @@ defmodule ApiWeb.Controllers.ChatController do
   end
 
   def new_chat(conn, %{"first_message" => first_message}) do
-    chat_params = %{"name" => "New Chat", "author_id" => conn.assigns[:user_id]}
+    chat_params = %{
+      "name" => String.slice(first_message, 0..20),
+      "author_id" => conn.assigns[:user_id]
+    }
 
     with {:ok, chat} <- Api.Chat.new(chat_params),
          message_params = %{
@@ -23,13 +26,16 @@ defmodule ApiWeb.Controllers.ChatController do
            author_id: conn.assigns[:user_id]
          },
          {:ok, message} <- Api.Message.new(message_params) do
-      Api.Message.to_public(message)
+      %{
+        message: Api.Message.to_public(message),
+        api_key: conn.assigns[:api_key]
+      }
       |> Api.Workers.GenerateResponseJob.new()
       |> Oban.insert()
 
       conn
       |> put_status(:ok)
-      |> json(%{chat: %{id: chat.id, name: chat.name}, message: Api.Message.to_public(message)})
+      |> json(%{chat: Api.Chat.to_public(chat), message: Api.Message.to_public(message)})
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to create chat"})
     end
@@ -44,7 +50,10 @@ defmodule ApiWeb.Controllers.ChatController do
     }
 
     with {:ok, message} <- Api.Message.new(message_params) do
-      Api.Message.to_public(message)
+      %{
+        message: Api.Message.to_public(message),
+        api_key: conn.assigns[:api_key]
+      }
       |> Api.Workers.GenerateResponseJob.new()
       |> Oban.insert()
 

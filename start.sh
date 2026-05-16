@@ -13,7 +13,7 @@ print_log()
 start_ui()
 {
     print_log "Starting UI..."
-    cd ui && npm run dev -- --host &
+    cd ui && npm run dev &
     ui_pid=$!
     print_log "UI started with PID $ui_pid, waiting for it to be ready..."
     while ! nc -z localhost 5173; do

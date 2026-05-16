@@ -3,11 +3,13 @@ import { ChatInput } from "../components/ChatInput"
 // import { DatabaseDropdown } from "../components/DatabaseDropdown"
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "@/AppContext";
+import type { Conversation, Message } from "@/types";
 
 export function NewChatView(): React.JSX.Element {
     const navigate = useNavigate();
     const ctx = useContext(AppContext);
 
+    // TODO add chat
     const startNewChat = async (message: string): Promise<void> => {
         const response = await fetch("/api/chats/new", {
             method: "POST",
@@ -20,11 +22,12 @@ export function NewChatView(): React.JSX.Element {
         })
 
         if (response && response.ok) {
-            const { chat, message } = await response.json();
+            const { chat, message }: { chat: Conversation; message: Message } = await response.json();
             const { id } = chat;
             navigate(`/chat/${id}`);
-            const payload = { chatId: id, messages: [message] };
-            ctx?.dispatch({ type: "SET_MESSAGES", payload: payload });
+            const messagePayload = { chatId: id, messages: [message] };
+            ctx?.dispatch({ type: "SET_MESSAGES", payload: messagePayload });
+            ctx?.dispatch({ type: "ADD_CONVERSATION", payload: chat });
         } else {
             console.error("Failed to start new chat");
         }

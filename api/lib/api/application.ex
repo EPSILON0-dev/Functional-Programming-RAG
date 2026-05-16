@@ -22,7 +22,16 @@ defmodule Api.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Api.Supervisor]
-    Supervisor.start_link(children, opts)
+    {:ok, _} = result = Supervisor.start_link(children, opts)
+
+    :telemetry.attach(
+      "oban-job-errors",
+      [:oban, :job, :exception],
+      &handle_oban_job_error/4,
+      nil
+    )
+
+    result
   end
 
   # Tell Phoenix to update the endpoint configuration
@@ -33,20 +42,15 @@ defmodule Api.Application do
     :ok
   end
 
-  :telemetry.attach(
-    "oban-job-errors",
-    [:oban, :job, :exception],
-    fn _event, _measurements, metadata, _config ->
-      Logger.error("""
-      OBAN JOB CRASH
+  defp handle_oban_job_error(_event, _measurements, metadata, _config) do
+    IO.puts("""
+    OBAN JOB CRASH
 
-      Worker: #{inspect(metadata.worker)}
-      Queue: #{inspect(metadata.queue)}
-      Error: #{inspect(metadata.reason)}
-      Stacktrace:
-      #{Exception.format_stacktrace(metadata.stacktrace)}
-      """)
-    end,
-    nil
-  )
+    Worker: #{inspect(metadata.worker)}
+    Queue: #{inspect(metadata.queue)}
+    Error: #{inspect(metadata.reason)}
+    Stacktrace:
+    #{Exception.format_stacktrace(metadata.stacktrace)}
+    """)
+  end
 end

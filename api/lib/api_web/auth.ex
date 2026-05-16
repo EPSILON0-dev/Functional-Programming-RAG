@@ -14,6 +14,23 @@ defmodule ApiWeb.Auth do
     end
   end
 
+  def verify_api_key(conn, _opts) do
+    user_id = conn.assigns[:user_id]
+
+    with user <- Api.Repo.get_by(Api.User, id: user_id),
+         api_key <-
+           user
+           |> Api.Repo.preload(:api_keys)
+           |> Map.get(:api_keys)
+           |> Enum.find(&(&1.id == user.selected_key_id)),
+         final_key = Api.APIKey.decrypt_key(api_key.encrypted_key),
+         false <- is_nil(final_key) do
+      conn |> assign(:api_key, final_key)
+    else
+      _ -> conn |> put_status(:forbidden) |> json(%{error: "API key required"}) |> halt()
+    end
+  end
+
   def authenticate_ws_token(token) do
     with {:ok, claims} <- ApiWeb.Token.verify_and_validate(token),
          true <- claims["ws"],

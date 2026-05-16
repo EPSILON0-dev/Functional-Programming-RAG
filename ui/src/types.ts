@@ -1,21 +1,22 @@
 export interface Message 
 {
     id: string;
-    role: "user" | "assistant";
+    role: "user" | "generating" | "assistant";
     content: string;
     timestamp: string;
-}
-
-export interface Chat
-{
-    id: string;
-    name: string;
 }
 
 export interface NamedIdentifier
 {
     id: string;
     name: string;
+}
+
+export interface Conversation
+{
+    id: string;
+    name: string;
+    timestamp: string;
 }
 
 export interface DatabaseDocument

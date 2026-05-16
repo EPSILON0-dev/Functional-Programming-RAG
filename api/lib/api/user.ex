@@ -8,13 +8,14 @@ defmodule Api.User do
     field(:username, :string)
     field(:password, :string)
     field(:deleted_at, :utc_datetime)
+    field(:selected_key_id, :binary_id)
     has_many(:chats, Api.Chat, foreign_key: :author_id)
     has_many(:messages, Api.Message, foreign_key: :author_id)
+    has_many(:api_keys, Api.APIKey, foreign_key: :owner_id)
 
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
   def changeset(users, attrs) do
     users
     |> cast(attrs, [:username, :password, :deleted_at])
@@ -26,6 +27,14 @@ defmodule Api.User do
     %__MODULE__{}
     |> changeset(attrs)
     |> Api.Repo.insert()
+  end
+
+  def set_selected_key(user_id, key_id) do
+    with {:ok, user} <- get_by_id(user_id) do
+      user
+      |> change(%{selected_key_id: key_id})
+      |> Api.Repo.update()
+    end
   end
 
   def get_by_username(username) do

@@ -10,11 +10,22 @@ defmodule ApiWeb.Router do
     plug(ApiWeb.Auth, :authenticate_conn)
   end
 
+  pipeline :auth_with_api_key do
+    plug(:accepts, ["json"])
+    plug(ApiWeb.Auth, :authenticate_conn)
+    plug(ApiWeb.Auth, :verify_api_key)
+  end
+
   scope "/api/auth", ApiWeb do
     pipe_through(:auth_api)
 
     get("/me", Controllers.UserController, :me)
     get("/wstoken", Controllers.UserController, :wstoken)
+
+    get("/keys", Controllers.UserController, :get_api_keys)
+    post("/keys", Controllers.UserController, :add_api_key)
+    post("/keys/selected", Controllers.UserController, :select_api_key)
+    delete("/keys/:key_id", Controllers.UserController, :delete_api_key)
   end
 
   scope "/api/auth", ApiWeb do
@@ -28,10 +39,15 @@ defmodule ApiWeb.Router do
   scope "/api/chats", ApiWeb do
     pipe_through(:auth_api)
 
-    post("/new", Controllers.ChatController, :new_chat)
     get("/", Controllers.ChatController, :get_chats)
     get("/:chat_id", Controllers.ChatController, :get_chat)
     get("/:chat_id/messages", Controllers.ChatController, :get_chat_messages)
+  end
+
+  scope "/api/chats", ApiWeb do
+    pipe_through([:auth_with_api_key])
+
+    post("/new", Controllers.ChatController, :new_chat)
     post("/:chat_id/messages", Controllers.ChatController, :send_message)
   end
 

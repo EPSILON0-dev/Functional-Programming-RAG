@@ -7,6 +7,7 @@ defmodule Api.Repo.Migrations.CreateUser do
       add :username, :string, null: false
       add :password, :text, null: false
       add :deleted_at, :utc_datetime
+      add :selected_key_id, :binary_id
 
       timestamps(type: :utc_datetime)
     end

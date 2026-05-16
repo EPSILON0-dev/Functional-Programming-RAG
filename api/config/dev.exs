@@ -27,6 +27,10 @@ config :api, ApiWeb.Endpoint,
   secret_key_base: "o1dCqY41BFd5wQ6t7dzaB8bT40JzJSxW2M0SbA+yf0Pb1yydUsfNdVj+Uz+nwma8",
   watchers: []
 
+# API Key encryption configuration
+config :api, Api.APIKey,
+  encryption_key: "dev_encryption_key_32_chars_long"
+
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed

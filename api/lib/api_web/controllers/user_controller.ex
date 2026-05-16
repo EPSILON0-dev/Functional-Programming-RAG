@@ -72,7 +72,9 @@ defmodule ApiWeb.Controllers.UserController do
   def me(conn, _) do
     with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
          {:ok, user} <- Api.User.get_by_id(user_id) do
-      conn |> put_status(:ok) |> json(%{id: user.id, username: user.username})
+      conn
+      |> put_status(:ok)
+      |> json(%{id: user.id, username: user.username, selected_key_id: user.selected_key_id})
     else
       _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
     end
@@ -83,6 +85,52 @@ defmodule ApiWeb.Controllers.UserController do
          {:ok, user} <- Api.User.get_by_id(user_id) do
       token = gen_user_ws_token(user)
       conn |> put_status(:ok) |> json(%{token: token})
+    else
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
+
+  def get_api_keys(conn, _) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, user} <- Api.User.get_by_id(user_id) do
+      api_keys = Api.Repo.preload(user, :api_keys).api_keys
+      api_keys = api_keys |> Enum.map(&Api.APIKey.to_public/1)
+
+      conn
+      |> put_status(:ok)
+      |> json(%{api_keys: api_keys, selected_key_id: user.selected_key_id})
+    else
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
+
+  def add_api_key(conn, %{"name" => name, "key" => key}) do
+    encrypted_key = key
+
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, user} <- Api.User.get_by_id(user_id),
+         {:ok, api_key} <-
+           Api.APIKey.new(%{owner_id: user.id, encrypted_key: encrypted_key, name: name}) do
+      conn |> put_status(:created) |> json(%{id: api_key.id})
+    else
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
+
+  def delete_api_key(conn, %{"key_id" => key_id}) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, _} <- Api.APIKey.delete(key_id, user_id) do
+      conn |> put_status(:ok) |> json(%{message: "API key deleted"})
+    else
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
+
+  def select_api_key(conn, %{"key_id" => key_id}) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, _} <- Api.APIKey.get_by_id(key_id, user_id),
+         {:ok, _} <- Api.User.set_selected_key(user_id, key_id) do
+      conn |> put_status(:ok) |> json(%{message: "Selected API key updated"})
     else
       _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
     end

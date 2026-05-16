@@ -3,15 +3,9 @@ defmodule Api.Workers.GenerateResponseJob do
     queue: :default,
     max_attempts: 1
 
-  # If the message gets read from the database, it will be read as an error
-  # Message sent via the socket will be read as generating
-  # When the generation is complete, the message will be updated
-
-  defp query_openrouter(messages, model, props) do
-    # Hardcoding :D
+  defp query_openrouter(key, messages, model, props) do
     config = %{
-      openrouter_api_url: System.get_env("OPENROUTER_API_URL") || "https://openrouter.ai/api/v1",
-      openrouter_api_key: System.get_env("OPENROUTER_API_KEY") || "sk-xxx"
+      openrouter_api_url: System.get_env("OPENROUTER_API_URL") || "https://openrouter.ai/api/v1"
     }
 
     query_params = Map.merge(%{messages: messages, model: model}, props)
@@ -19,7 +13,7 @@ defmodule Api.Workers.GenerateResponseJob do
     case Req.post(
            url: config.openrouter_api_url <> "/chat/completions",
            headers: [
-             Authorization: "Bearer " <> config.openrouter_api_key,
+             Authorization: "Bearer " <> key,
              "Content-Type": "application/json"
            ],
            json: query_params
@@ -76,19 +70,24 @@ defmodule Api.Workers.GenerateResponseJob do
     end
   end
 
-  defp generate_response(args) do
+  defp generate_response(api_key, message) do
     with {:ok, conversation_history} <-
-           get_conversation_history(args["chat_id"], args["author_id"]),
-         {:ok, response} <- query_openrouter(conversation_history, "gpt-4.1-mini", %{}) do
-      {:ok,
-       response
-       |> Map.get("choices")
-       |> List.first()
-       |> Map.get("message")
-       |> Map.get("content")}
+           get_conversation_history(message["chat_id"], message["author_id"]) do
+      case query_openrouter(api_key, conversation_history, "gpt-4.1-mini", %{}) do
+        {:ok, response} ->
+          {:ok,
+           response
+           |> Map.get("choices")
+           |> List.first()
+           |> Map.get("message")
+           |> Map.get("content")}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
     else
       _ ->
-        {:error, "Failed to generate response"}
+        {:error, "Failed to generate response from OpenRouter"}
     end
   end
 
@@ -104,20 +103,19 @@ defmodule Api.Workers.GenerateResponseJob do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
-    with {:ok, initial_message} <- create_initial_message(args),
-         :ok <- broadcast_generating_response(initial_message, args["author_id"]),
-         {:ok, response} <- generate_response(args),
+    with {:ok, initial_message} <- create_initial_message(args["message"]),
+         :ok <- broadcast_generating_response(initial_message, args["message"]["author_id"]),
+         {:ok, response} <- generate_response(args["api_key"], args["message"]),
          {:ok, complete_message} <-
            Api.Message.update_by_id(initial_message.id, %{
              content: response,
              role: "assistant"
            }),
-         :ok <- broadcast_response_complete(complete_message, args["author_id"]) do
+         :ok <- broadcast_response_complete(complete_message, args["message"]["author_id"]) do
       :ok
     else
-      _ ->
-        IO.puts("GenerateResponseJob error")
-        {:error, "Failed to generate response"}
+      {_, reason} ->
+        {:error, reason}
     end
   end
 end
