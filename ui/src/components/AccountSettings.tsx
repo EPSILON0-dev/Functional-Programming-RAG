@@ -114,7 +114,6 @@ export function AccountSettingsDialog({ open, onOpenChange }: AccountSettingsDia
             throw new Error(data.error || "Failed to delete API key");
           });
         }
-        return res.json();
       })
       .then(() => {
         keys.refetch();

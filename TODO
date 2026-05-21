@@ -1,1 +1,3 @@
-* Add chat on creation to the chat list
+* Add a tooltip next to the account when no key is added and a toast 
+* Add autoscroll
+* If the query and response have the same timestamp, put the resp below the query

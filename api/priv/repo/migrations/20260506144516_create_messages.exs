@@ -7,8 +7,7 @@ defmodule Api.Repo.Migrations.CreateMessages do
       add :deleted_at, :utc_datetime
       add :content, :text
       add :role, :string
-      add :provider_metadata, :map
-      add :usage_metadata, :map
+      add :metadata, :map
       add :chat_id, references(:chats, on_delete: :nothing, type: :binary_id)
       add :author_id, references(:users, on_delete: :nothing, type: :binary_id)
 

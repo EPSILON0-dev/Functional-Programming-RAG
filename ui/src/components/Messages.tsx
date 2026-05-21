@@ -4,49 +4,48 @@ import remarkGfm from "remark-gfm";
 
 import { Skeleton } from "./ui/skeleton"
 import { IconAlertTriangle } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
 
 interface Props {
-    message: string;
+  message: string;
 }
 
 export function UserMessage({ message }: Props): React.JSX.Element {
-    return (
-        <div>
-            <div className="bg-secondary rounded-2xl px-4 py-2 max-w-2xl ml-auto w-fit">{message}</div>
-            <div className="h-8" />
-        </div>
-    )
+  return (
+    <div>
+      <div className="bg-secondary rounded-2xl px-4 py-2 max-w-2xl ml-auto w-fit">{message}</div>
+      <div className="h-8" />
+    </div>
+  )
 }
 
 export function GeneratingMessage(): React.JSX.Element {
-    return (
-        <div>
-            <Skeleton className="h-4 w-32" />
-            <div className="h-8" />
-        </div>
-    )
+  return (
+    <div>
+      <Skeleton className="h-4 w-32" />
+      <div className="h-8" />
+    </div>
+  )
 }
 
 export function AssistantMessage({ message }: Props): React.JSX.Element {
-    return (
-        <div>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message}
-            </ReactMarkdown>
-            <div className="h-16" />
-        </div>
-    )
+  return (
+    <div>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {message}
+      </ReactMarkdown>
+      <div className="h-16" />
+    </div>
+  )
 }
 
 export function ErrorMessage({ message }: Props): React.JSX.Element {
-    return (
-        <div>
-            <div className="outline-1 outline-destructive/50 rounded-2xl px-4 py-2 max-w-2xl mr-auto w-fit">
-                <IconAlertTriangle size="20" className="text-destructive inline-block mr-2" />
-                {message}
-            </div>
-            <div className="h-8" />
-        </div>
-    )
+  return (
+    <div>
+      <div className="outline-1 outline-destructive/50 rounded-2xl px-4 py-2 max-w-2xl mr-auto w-fit">
+        <IconAlertTriangle size="20" className="text-destructive inline-block mr-2" />
+        {message}
+      </div>
+      <div className="h-8" />
+    </div>
+  )
 }

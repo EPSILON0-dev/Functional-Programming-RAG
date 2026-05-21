@@ -4,6 +4,7 @@ import { ChatInput } from "../components/ChatInput"
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "@/AppContext";
 import type { Conversation, Message } from "@/types";
+import { toast } from "sonner";
 
 export function NewChatView(): React.JSX.Element {
     const navigate = useNavigate();
@@ -30,6 +31,9 @@ export function NewChatView(): React.JSX.Element {
             ctx?.dispatch({ type: "ADD_CONVERSATION", payload: chat });
         } else {
             console.error("Failed to start new chat");
+            toast.error("Failed to create chat", {
+                description: "An error occurred while creating a new chat. Please verify the API key and try again."
+            });
         }
     }
 

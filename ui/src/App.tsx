@@ -7,6 +7,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { AppProvider, queryClient, AppContext } from "./AppContext";
 import { NavSidebar } from "./views/NavSidebar";
 import { SidebarProvider } from "./components/ui/sidebar";
+import { Toaster } from "./components/ui/sonner";
 import { useContext } from "react";
 import './App.css'
 
@@ -55,6 +56,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AppProvider>
         <AuthGate />
+        <Toaster />
       </AppProvider>
     </QueryClientProvider>
   );

@@ -120,6 +120,9 @@ export class WebSocketManager {
         case "response_new":
           this.handleIncomingResponse(data);
           break;
+        case "phx_reply":
+          // We ignore them but they don't need to be logged
+          break;
         default:
           console.warn("Unhandled message event:", data.event);
       }

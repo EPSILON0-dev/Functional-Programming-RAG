@@ -8,8 +8,7 @@ defmodule Api.Message do
     field(:deleted_at, :utc_datetime)
     field(:content, :string)
     field(:role, :string)
-    field(:provider_metadata, :map)
-    field(:usage_metadata, :map)
+    field(:metadata, :map)
     belongs_to(:chat, Api.Chat, foreign_key: :chat_id, type: :binary_id)
     belongs_to(:author, Api.User, foreign_key: :author_id, type: :binary_id)
 
@@ -25,8 +24,7 @@ defmodule Api.Message do
       :role,
       :chat_id,
       :author_id,
-      :provider_metadata,
-      :usage_metadata
+      :metadata
     ])
     |> validate_required([:role, :chat_id])
     |> assoc_constraint(:author)
@@ -82,6 +80,7 @@ defmodule Api.Message do
       role: message.role,
       chat_id: message.chat_id,
       author_id: message.author_id,
+      metadata: message.metadata,
       timestamp: message.inserted_at
     }
   end

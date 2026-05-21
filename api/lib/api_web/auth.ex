@@ -23,8 +23,9 @@ defmodule ApiWeb.Auth do
            |> Api.Repo.preload(:api_keys)
            |> Map.get(:api_keys)
            |> Enum.find(&(&1.id == user.selected_key_id)),
-         final_key = Api.APIKey.decrypt_key(api_key.encrypted_key),
-         false <- is_nil(final_key) do
+         false <- is_nil(api_key),
+         encrypted_key when not is_nil(encrypted_key) <- api_key.encrypted_key,
+         final_key when not is_nil(final_key) <- Api.APIKey.decrypt_key(encrypted_key) do
       conn |> assign(:api_key, final_key)
     else
       _ -> conn |> put_status(:forbidden) |> json(%{error: "API key required"}) |> halt()

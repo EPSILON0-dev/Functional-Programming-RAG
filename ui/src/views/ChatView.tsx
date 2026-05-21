@@ -18,6 +18,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export function ChatView(): React.JSX.Element {
   const ctx = useContext(AppContext);
@@ -57,11 +58,19 @@ export function ChatView(): React.JSX.Element {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ content: message }),
-    }).then((response) => response.json()).then((message) => {
-      ctx?.dispatch({
-        type: "ADD_MESSAGE",
-        payload: { chatId, message },
-      });
+    }).then(async (response) => {
+      if (response.ok) {
+        const message = await response.json();
+        ctx?.dispatch({
+          type: "ADD_MESSAGE",
+          payload: { chatId, message },
+        });
+      } else {
+        console.error("Failed to send message");
+        toast.error("Failed to create chat", {
+          description: "An error occurred while sending message. Please verify the API key and try again."
+        });
+      }
     }).catch((error) => {
       console.error("Error sending message:", error)
     })

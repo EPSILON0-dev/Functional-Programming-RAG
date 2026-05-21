@@ -7,6 +7,7 @@ defmodule Api.MessagePublic do
     :role,
     :chat_id,
     :author_id,
+    :metadata,
     :timestamp,
   ]
 
@@ -16,6 +17,7 @@ defmodule Api.MessagePublic do
           role: String.t(),
           chat_id: String.t(),
           author_id: String.t(),
+          metadata: map(),
           timestamp: DateTime.t(),
         }
 end

@@ -117,8 +117,21 @@ defmodule ApiWeb.Controllers.UserController do
     end
   end
 
+  defp deselect_api_key(user_id, key_id) do
+    with {:ok, user} <- Api.User.get_by_id(user_id) do
+      if user.selected_key_id == key_id do
+        Api.User.set_selected_key(user_id, nil)
+      else
+        {:ok, "No deselection needed"}
+      end
+    else
+      _ -> {:error, "Failed to deselect API key"}
+    end
+  end
+
   def delete_api_key(conn, %{"key_id" => key_id}) do
     with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, _} <- deselect_api_key(user_id, key_id),
          {:ok, _} <- Api.APIKey.delete(key_id, user_id) do
       conn |> put_status(:no_content) |> json(%{message: "API key deleted"})
     else
