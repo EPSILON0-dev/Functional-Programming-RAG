@@ -7,7 +7,8 @@ defmodule Model.Provider.Options do
     :presence_penalty,
     :frequency_penalty,
     :reasoning_enabled,
-    :reasoning_effort
+    :reasoning_effort,
+    :responseFormat
   ]
 
   @type t :: %__MODULE__{
@@ -18,6 +19,7 @@ defmodule Model.Provider.Options do
           presence_penalty: float() | nil,
           frequency_penalty: float() | nil,
           reasoning_enabled: boolean() | nil,
-          reasoning_effort: String.t() | nil
+          reasoning_effort: String.t() | nil,
+          responseFormat: map() | nil
         }
 end

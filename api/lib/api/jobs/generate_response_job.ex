@@ -27,7 +27,7 @@ defmodule Api.Workers.GenerateResponseJob do
     end
   end
 
-  defp get_conversation_history(chat_id, user_id) do
+  defp get_conversation(chat_id, user_id) do
     with {:ok, messages} <- Api.Message.get_by_chat_id(chat_id, user_id) do
       {:ok,
        messages
@@ -44,23 +44,11 @@ defmodule Api.Workers.GenerateResponseJob do
     end
   end
 
-  defp get_conversation_string(chat_id, user_id) do
-    with {:ok, conversation_history} <- get_conversation_history(chat_id, user_id) do
-      {:ok,
-       (conversation_history
-        |> Enum.reduce("", fn message, acc ->
-          acc <> "#{message.role}: #{message.content}\n\n"
-        end)) <> "assistant:"}
-    else
-      _ -> {:error, "Failed to construct conversation string"}
-    end
-  end
-
   defp generate_response(api_key, message) do
-    with {:ok, query} <- get_conversation_string(message["chat_id"], message["author_id"]) do
+    with {:ok, conversation} <- get_conversation(message["chat_id"], message["author_id"]) do
       options = %Model.Provider.Options{model: "gpt-4o"}
 
-      case Model.Provider.OpenRouter.generate_response(api_key, query, options) do
+      case Model.Provider.OpenRouter.generate_response(api_key, conversation, options) do
         {:ok, response} -> {:ok, response}
         {:error, reason} -> {:error, reason}
       end

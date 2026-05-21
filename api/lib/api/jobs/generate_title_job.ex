@@ -3,7 +3,7 @@ defmodule Api.Workers.GenerateTitleJob do
     queue: :default,
     max_attempts: 1
 
-  defp get_conversation_history(chat_id, user_id) do
+  defp get_conversation(chat_id, user_id) do
     with {:ok, messages} <- Api.Message.get_by_chat_id(chat_id, user_id) do
       {:ok,
        messages
@@ -20,25 +20,14 @@ defmodule Api.Workers.GenerateTitleJob do
     end
   end
 
-  # TODO: Use a structured response
-  defp get_conversation_string(chat_id, user_id) do
-    with {:ok, conversation_history} <- get_conversation_history(chat_id, user_id) do
-      query =
-        (conversation_history
-         |> Enum.reduce("", fn message, acc ->
-           acc <> "#{message.role}: #{message.content}\n\n"
-         end)) <>
-          "Based on the above conversation, generate a concise and descriptive title that captures the main topic or theme of the discussion. Keep it short like \"Question about cars\", don't put the title in quotes, do not describe what's happening, just give the topic name"
-
-      {:ok, query}
-    else
-      _ -> {:error, "Failed to construct conversation string"}
-    end
-  end
-
   defp generate_title(api_key, chat_id, user_id) do
-    with {:ok, query} <- get_conversation_string(chat_id, user_id) do
+    with {:ok, conversation} <- get_conversation(chat_id, user_id) do
       options = %Model.Provider.Options{model: "gpt-4o"}
+
+      instruction =
+        "Based on the above conversation, generate a concise and descriptive title that captures the main topic or theme of the discussion. Keep it short like \"Question about cars\", don't put the title in quotes, do not describe what's happening, just give the topic name"
+
+      query = conversation ++ [%{role: "user", content: instruction}]
 
       case Model.Provider.OpenRouter.generate_response(api_key, query, options) do
         {:ok, response} -> {:ok, response}
@@ -59,7 +48,6 @@ defmodule Api.Workers.GenerateTitleJob do
 
   defp handle_rename(chat_id, user_id, new_name) do
     with {:ok, _} <- Api.Chat.rename_by_id(chat_id, user_id, new_name) do
-      IO.inspect(new_name, label: "Generated Title")
       broadcast_rename(chat_id, user_id, new_name)
       {:ok, "Chat renamed successfully"}
     end
@@ -67,7 +55,6 @@ defmodule Api.Workers.GenerateTitleJob do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
-    IO.inspect(args, label: "GenerateTitleJob Args")
     #
     # Step 1: Generate title using OpenRouter
     with {:ok, response} <- generate_title(args["api_key"], args["chat_id"], args["user_id"]) do
