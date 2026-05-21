@@ -109,10 +109,31 @@ defmodule Api.Workers.GenerateResponseJob do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
+    #
+    # Step 1: Create initial message with role "generating" and broadcast to user
     with {:ok, initial_message} <- create_initial_message(args["message"]) do
+      #
+      # Step 2: Generate response from OpenRouter using conversation history as context
       with {:ok, response} <- generate_response(args["api_key"], args["message"]) do
+        #
+        # Step 3: Update initial message with generated content and broadcast completion to user
         handle_completion(response, initial_message.id, args["message"]["author_id"])
+
+        # Step 4: If it was the first message start the job for renaming the chat
+        if args["is_first_message"] do
+          %Api.Workers.GenerateTitleJobArgs{
+            chat_id: args["message"]["chat_id"],
+            user_id: args["message"]["author_id"],
+            api_key: args["api_key"]
+          }
+          |> Api.Workers.GenerateTitleJob.new()
+          |> Oban.insert()
+        end
+
+        {:ok, "Response generated successfully"}
       else
+        #
+        # Step 3*: If generation failed update the message with an error and broadcast to user
         {_, reason} ->
           handle_error(reason, initial_message.id, args["message"]["author_id"])
           {:error, reason}

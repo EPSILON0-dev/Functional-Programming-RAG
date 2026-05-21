@@ -14,7 +14,7 @@ defmodule ApiWeb.Controllers.ChatController do
 
   def new_chat(conn, %{"first_message" => first_message}) do
     chat_params = %{
-      "name" => String.slice(first_message, 0..20),
+      "name" => "New Chat",
       "author_id" => conn.assigns[:user_id]
     }
 

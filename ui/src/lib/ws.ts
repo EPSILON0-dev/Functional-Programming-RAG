@@ -78,7 +78,6 @@ export class WebSocketManager {
   }
 
   private handleIncomingResponse(message: any) {
-    console.log("Received message:", message);
     this.dispatch({
       type: "ADD_MESSAGE",
       payload: {
@@ -89,6 +88,16 @@ export class WebSocketManager {
           content: message.payload.content || "",
           timestamp: message.payload.timestamp,
         }
+      }
+    });
+  }
+
+  private handleIncomingRename(chat: any) {
+    this.dispatch({
+      type: "RENAME_CONVERSATION",
+      payload: {
+        chatId: chat.payload.chat_id,
+        name: chat.payload.chat_name
       }
     });
   }
@@ -119,6 +128,9 @@ export class WebSocketManager {
         case "response_complete":
         case "response_new":
           this.handleIncomingResponse(data);
+          break;
+        case "chat_rename":
+          this.handleIncomingRename(data);
           break;
         case "phx_reply":
           // We ignore them but they don't need to be logged

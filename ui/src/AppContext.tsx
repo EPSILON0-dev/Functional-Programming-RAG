@@ -34,6 +34,7 @@ type Action =
   | { type: "SET_WEBSOCKET"; payload: WebSocketManager }
   | { type: "SET_CONVERSATIONS"; payload: Conversation[] }
   | { type: "ADD_CONVERSATION"; payload: Conversation }
+  | { type: "RENAME_CONVERSATION"; payload: { chatId: string; name: string } }
   | { type: "REFRESH_CONVERSATIONS" }
   | { type: "TOGGLE_THEME" }
   | { type: "LOGIN"; payload: AuthUser }
@@ -48,11 +49,15 @@ function toggleTheme(state: AppState): AppState {
 }
 
 function compareMessageDates(a: Message, b: Message): number {
-  return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+  const dateA = new Date(a.timestamp).getTime()
+  const dateB = new Date(b.timestamp).getTime()
+  return (dateA === dateB) ? ((a.role === "user") ? -1 : 1) : (dateA - dateB);
 }
 
 function compareChatDates(a: Conversation, b: Conversation): number {
-  return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  const dateA = new Date(a.timestamp).getTime()
+  const dateB = new Date(b.timestamp).getTime()
+  return dateB - dateA;
 }
 
 function setMessages(state: AppState, chatId: string, messages: Message[]): AppState {
@@ -95,6 +100,15 @@ function setConversations(state: AppState, chats: Conversation[]): AppState {
   };
 }
 
+function renameConversation(state: AppState, payload: { chatId: string; name: string }): AppState {
+  const { chatId, name } = payload;
+  const newState = {
+    ...state,
+    chats: state.chats?.map((chat) => (chat.id === chatId ? { ...chat, name } : chat)) ?? [],
+  };
+  return newState;
+}
+
 function addConversation(state: AppState, chat: Conversation): AppState {
   return {
     ...state, chats: [...(state.chats ?? []), chat].sort(compareChatDates)
@@ -113,6 +127,7 @@ function reducer(state: AppState, action: Action): AppState {
     case "SET_CONVERSATIONS": return setConversations(state, action.payload);
     case "ADD_CONVERSATION": return addConversation(state, action.payload);
     case "REFRESH_CONVERSATIONS": return { ...state, chatRefreshCounter: state.chatRefreshCounter + 1 };
+    case "RENAME_CONVERSATION": return renameConversation(state, action.payload);
 
     case "TOGGLE_THEME": return toggleTheme(state);
 
