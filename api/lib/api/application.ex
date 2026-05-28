@@ -27,7 +27,7 @@ defmodule Api.Application do
     :telemetry.attach(
       "oban-job-errors",
       [:oban, :job, :exception],
-      &handle_oban_job_error/4,
+      &Api.Telemetry.ObanHandler.handle_job_error/4,
       nil
     )
 
@@ -40,17 +40,5 @@ defmodule Api.Application do
   def config_change(changed, _new, removed) do
     ApiWeb.Endpoint.config_change(changed, removed)
     :ok
-  end
-
-  defp handle_oban_job_error(_event, _measurements, metadata, _config) do
-    IO.puts("""
-    OBAN JOB CRASH
-
-    Worker: #{inspect(metadata.worker)}
-    Queue: #{inspect(metadata.queue)}
-    Error: #{inspect(metadata.reason)}
-    Stacktrace:
-    #{Exception.format_stacktrace(metadata.stacktrace)}
-    """)
   end
 end

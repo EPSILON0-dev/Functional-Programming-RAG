@@ -22,14 +22,14 @@ defmodule Api.Workers.GenerateTitleJob do
 
   defp generate_title(api_key, chat_id, user_id) do
     with {:ok, conversation} <- get_conversation(chat_id, user_id) do
-      options = %Model.Provider.Options{model: "gpt-4o"}
+      options = %Api.Provider.Options{model: "gpt-4o"}
 
       instruction =
         "Based on the above conversation, generate a concise and descriptive title that captures the main topic or theme of the discussion. Keep it short like \"Question about cars\", don't put the title in quotes, do not describe what's happening, just give the topic name"
 
       query = conversation ++ [%{role: "user", content: instruction}]
 
-      case Model.Provider.OpenRouter.generate_response(api_key, query, options) do
+      case Api.Provider.OpenRouter.generate_response(api_key, query, options) do
         {:ok, response} -> {:ok, response}
         {:error, reason} -> {:error, reason}
       end

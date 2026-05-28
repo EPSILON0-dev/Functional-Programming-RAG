@@ -1,3 +1,22 @@
+defmodule Api.APIKeyPublic do
+  @derive Jason.Encoder
+  defstruct [
+    :id,
+    :key,
+    :name,
+    :owner_id,
+    :timestamp
+  ]
+
+  @type t :: %__MODULE__{
+          id: String.t(),
+          key: String.t(),
+          name: String.t(),
+          owner_id: String.t(),
+          timestamp: DateTime.t()
+        }
+end
+
 defmodule Api.APIKey do
   use Ecto.Schema
   import Ecto.Changeset
@@ -75,5 +94,4 @@ defmodule Api.APIKey do
   def decrypt_key(encrypted_key) do
     encrypted_key
   end
-
 end

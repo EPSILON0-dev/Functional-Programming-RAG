@@ -46,9 +46,9 @@ defmodule Api.Workers.GenerateResponseJob do
 
   defp generate_response(api_key, message) do
     with {:ok, conversation} <- get_conversation(message["chat_id"], message["author_id"]) do
-      options = %Model.Provider.Options{model: "gpt-4o"}
+      options = %Api.Provider.Options{model: "gpt-4o"}
 
-      case Model.Provider.OpenRouter.generate_response(api_key, conversation, options) do
+      case Api.Provider.OpenRouter.generate_response(api_key, conversation, options) do
         {:ok, response} -> {:ok, response}
         {:error, reason} -> {:error, reason}
       end

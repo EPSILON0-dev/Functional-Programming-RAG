@@ -37,6 +37,17 @@ config :api, Oban,
     default: 10
   ]
 
+# Configuration for the document loader
+config :api, Api.Loader,
+  llm_model: "openai/gpt-4.1-nano",
+  embedding_model: "openai/text-embedding-3-small",
+  chunk_size: 4000,
+  overlap_size: 750,
+  minimal_relevance: 0.2,
+  processing_concurrency: 32,
+  job_timeout_seconds: 120,
+  debug: false
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
