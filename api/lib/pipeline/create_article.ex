@@ -4,6 +4,7 @@ defmodule Api.Pipeline.CreateArticle do
   Your task is to take the provided text and perform the following operations:
    * Normalize the text by removing any irrelevant information,
       correcting formatting issues, and ensuring consistency in style.
+   * Make sure the normalized text is written in ENGLISH, regardless of the input language.
    * Assess the relevance of the text to the knowledge base, providing a
       relevance score between 0 and 1, where 0 means completely irrelevant
       and 1 means highly relevant. Also provide a brief explanation for the
@@ -53,6 +54,7 @@ defmodule Api.Pipeline.CreateArticle do
    * The title should be clear and relevant to the content of the text.
    * The description should provide a quick overview of the text's content.
    * The title should be at most 10 words long, and the description should be at most 50 words or 2 sentences long.
+   * Make sure the title and the description are written in ENGLISH, regardless of the input language.
   """
 
   @title_description_output_format %{
@@ -165,7 +167,7 @@ defmodule Api.Pipeline.CreateArticle do
               description_embedding.cost +
               content_embedding.cost
 
-          completed_article = %Api.ArticlePublic{
+          completed_article = %Api.Article{
             title: title["title"],
             description: title["description"],
             content: normalized_article,

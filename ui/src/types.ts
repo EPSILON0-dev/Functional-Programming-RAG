@@ -19,19 +19,23 @@ export interface Conversation
     timestamp: string;
 }
 
-export interface DatabaseDocument
+export interface Article
 {
     id: string;
     title: string;
-    abstract: string;
+    description: string;
     content: string;
+    generation_cost: number;
+    embedding_model: string;
+    inserted_at: string;
 }
 
-export interface Database
+export interface ArticlesListResponse
 {
-    id: string;
-    name: string;
-    documents: DatabaseDocument[];
+    articles: Article[];
+    total: number;
+    offset?: number;
+    limit: number;
 }
 
 export type View = "landing" | "chat" | "database";

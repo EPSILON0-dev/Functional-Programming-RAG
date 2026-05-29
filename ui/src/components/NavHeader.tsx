@@ -11,6 +11,7 @@ import {
 
 import {
     IconPencilPlus,
+    IconBooks,
 } from "@tabler/icons-react"
 import { useNavigate } from "react-router-dom";
 
@@ -40,6 +41,15 @@ export function NavHeader(): React.JSX.Element {
                     >
                         <IconPencilPlus className="mr-2" />
                         <span>New Chat</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        className="active:bg-secondary transition-all duration-50"
+                        onClick={() => navigate("/explore")}
+                    >
+                        <IconBooks className="mr-2" />
+                        <span>Explore Articles</span>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>

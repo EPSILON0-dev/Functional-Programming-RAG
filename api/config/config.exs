@@ -11,6 +11,8 @@ config :api,
   ecto_repos: [Api.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+config :api, Api.Repo, types: Api.PostgrexTypes
+
 # Configure the endpoint
 config :api, ApiWeb.Endpoint,
   url: [host: "localhost"],

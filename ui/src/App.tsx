@@ -36,6 +36,10 @@ const router = createBrowserRouter([
         path: "/database/:databaseId",
         element: <DatabaseView />
       },
+      {
+        path: "/explore",
+        element: <DatabaseView />
+      },
     ]
   },
 ]);

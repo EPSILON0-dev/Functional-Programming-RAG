@@ -32,7 +32,7 @@ defmodule Api.Loader do
 
   defp log_article_creation({:ok, {:ok, article}}) do
     IO.puts(
-      "Generated Article: (#{Float.round(article.generation_cost * 100.0, 3) || 0.0} cents) #{article.title}"
+      "Saved Article: (#{Float.round(article.generation_cost * 100.0, 3) || 0.0} cents) #{article.title}"
     )
 
     {:ok, article}
@@ -65,7 +65,16 @@ defmodule Api.Loader do
           max_concurrency: concurrency,
           timeout: timeout * 1000
         )
-        |> Stream.map(&log_article_creation/1)
+        |> Stream.map(fn
+          {:ok, {:ok, article}} ->
+            case Api.Article.save(article) do
+              {:ok, saved} -> log_article_creation({:ok, {:ok, saved}})
+              {:error, reason} -> log_article_creation({:error, reason})
+            end
+
+          other ->
+            log_article_creation(other)
+        end)
         |> Stream.filter(fn
           {:ok, _article} -> true
           _ -> false
@@ -73,7 +82,7 @@ defmodule Api.Loader do
         |> Enum.map(fn {_result, article} -> article end)
         |> Enum.to_list()
 
-      {:ok, chunks}
+      {:ok, articles}
     else
       {:error, reason} ->
         {:error, reason}

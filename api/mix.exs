@@ -52,6 +52,7 @@ defmodule Api.MixProject do
       {:bcrypt_elixir, "~> 3.0"},
       {:joken, "~> 2.6.2"},
       {:oban, "~> 2.17"},
+      {:pgvector, "~> 0.3"},
       {:igniter, "~> 0.6", only: [:dev, :test]}
     ]
   end

@@ -36,6 +36,13 @@ defmodule ApiWeb.Router do
     post("/logout", Controllers.UserController, :logout)
   end
 
+  scope "/api/articles", ApiWeb do
+    pipe_through(:auth_api)
+
+    get("/", Controllers.ArticleController, :get_articles)
+    get("/:article_id", Controllers.ArticleController, :get_article)
+  end
+
   scope "/api/chats", ApiWeb do
     pipe_through(:auth_api)
 
