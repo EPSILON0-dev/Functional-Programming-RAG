@@ -1,14 +1,20 @@
 import Config
 config :api, Oban, testing: :manual
 
+# Use fewer bcrypt rounds in tests for speed
+config :bcrypt_elixir, log_rounds: 4
+
+# JWT signing key for tests
+config :joken, default_signer: "test_secret_key_for_testing_only"
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :api, Api.Repo,
-  username: "postgres",
-  password: "postgres",
+  username: "pf_rag_dev_user",
+  password: "pf_rag_dev_password",
   hostname: "localhost",
   database: "api_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,

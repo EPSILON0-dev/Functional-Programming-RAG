@@ -66,7 +66,7 @@ defmodule Api.Message do
          true <- Enum.all?(messages, fn message -> is_nil(message.deleted_at) end) do
       Enum.each(messages, fn message ->
         message
-        |> change(deleted_at: DateTime.utc_now())
+        |> change(deleted_at: DateTime.truncate(DateTime.utc_now(), :second))
         |> Api.Repo.update()
       end)
     else

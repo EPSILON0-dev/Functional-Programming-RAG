@@ -23,11 +23,14 @@ defmodule ApiWeb.ConnCase do
       @endpoint ApiWeb.Endpoint
 
       use ApiWeb, :verified_routes
+      use Oban.Testing, repo: Api.Repo
 
       # Import conveniences for testing with connections
       import Plug.Conn
       import Phoenix.ConnTest
       import ApiWeb.ConnCase
+      import ApiWeb.AuthHelpers
+      import Api.Factory
     end
   end
 

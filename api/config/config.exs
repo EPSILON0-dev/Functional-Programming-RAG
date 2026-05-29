@@ -45,7 +45,7 @@ config :api, Api.Loader,
   embedding_model: "openai/text-embedding-3-small",
   chunk_size: 4000,
   overlap_size: 750,
-  minimal_relevance: 0.2,
+  minimal_relevance: 0.5,
   processing_concurrency: 32,
   job_timeout_seconds: 120,
   debug: false
