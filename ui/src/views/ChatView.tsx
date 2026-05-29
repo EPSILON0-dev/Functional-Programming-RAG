@@ -65,9 +65,14 @@ export function ChatView(): React.JSX.Element {
           type: "ADD_MESSAGE",
           payload: { chatId, message },
         });
+      } else if (response.status === 425) {
+        console.error("Server is still processing previous message");
+        toast.error("Not so fast.", {
+          description: "The server is still processing your previous message. Please wait a moment before sending another one."
+        });
       } else {
         console.error("Failed to send message");
-        toast.error("Failed to create chat", {
+        toast.error("Failed to send message", {
           description: "An error occurred while sending message. Please verify the API key and try again."
         });
       }
@@ -136,7 +141,7 @@ export function ChatView(): React.JSX.Element {
                 ) : item.role === "assistant" ? (
                   <AssistantMessage message={item.content} />
                 ) : item.role === "generating" ? (
-                  <GeneratingMessage />
+                  <GeneratingMessage message={item.content} />
                 ) : (
                   <ErrorMessage message="Response error, check your API key" />
                 )}

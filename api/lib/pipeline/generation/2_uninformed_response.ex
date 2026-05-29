@@ -10,7 +10,7 @@ defmodule Api.Pipeline.UninformedResponse do
   }
 
   @system_prompt """
-  You are a helpful and knowledgeable assistant.
+  You are a helpful and knowledgeable assistant. Assisting in learning functional programming.
   Answer the user's question based on the conversation history and your general knowledge.
   Do not reference or rely on any external documents or knowledge bases.
   Be concise, accurate, and direct.

@@ -40,7 +40,7 @@ type Action =
   | { type: "LOGIN"; payload: AuthUser }
   | { type: "LOGOUT" }
   | { type: "SET_MESSAGES"; payload: { chatId: string; messages: Message[] } }
-  | { type: "ADD_MESSAGE"; payload: { chatId: string; message: Message } };
+  | { type: "ADD_MESSAGE"; payload: { chatId: string; message: Message, replace?: boolean } }
 
 function toggleTheme(state: AppState): AppState {
   const next: Theme = state.theme === "light" ? "dark" : "light";
@@ -68,8 +68,9 @@ function setMessages(state: AppState, chatId: string, messages: Message[]): AppS
   };
 }
 
-function addMessage(state: AppState, chatId: string, message: Message): AppState {
+function addMessage(state: AppState, chatId: string, message: Message, replace: boolean = false): AppState {
   if (state.messages[chatId]?.some((msg) => msg.id === message.id)) {
+    if (!replace) { console.log("Message already exists and replace is false"); return state; }
     return {
       ...state,
       messages: {
@@ -135,8 +136,7 @@ function reducer(state: AppState, action: Action): AppState {
     case "LOGOUT": { authLogout(); return { ...state, currentUser: null }; }
 
     case "SET_MESSAGES": return setMessages(state, action.payload.chatId, action.payload.messages);
-    case "ADD_MESSAGE": return addMessage(state, action.payload.chatId, action.payload.message);
-
+    case "ADD_MESSAGE": return addMessage(state, action.payload.chatId, action.payload.message, action.payload.replace);
     default: return state;
   }
 }

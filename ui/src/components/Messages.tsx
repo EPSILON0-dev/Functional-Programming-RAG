@@ -2,7 +2,6 @@ import * as React from "react"
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { Skeleton } from "./ui/skeleton"
 import { IconAlertTriangle } from "@tabler/icons-react";
 
 interface Props {
@@ -18,10 +17,40 @@ export function UserMessage({ message }: Props): React.JSX.Element {
   )
 }
 
-export function GeneratingMessage(): React.JSX.Element {
+// TODO
+export function GeneratingMessage({ message }: Props): React.JSX.Element {
   return (
     <div>
-      <Skeleton className="h-4 w-32" />
+      <style>{`
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+        .generating-text {
+          animation: shimmer 2s infinite;
+          background: linear-gradient(
+            90deg,
+            currentColor 0%,
+            currentColor 40%,
+            rgba(255, 255, 255, 0.3) 50%,
+            currentColor 60%,
+            currentColor 100%
+          );
+          background-size: 1000px 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+      `}</style>
+      <div className="flex gap-3">
+        <div className="generating-text flex-1 py-auto">
+          {message}
+        </div>
+      </div>
       <div className="h-8" />
     </div>
   )
@@ -30,9 +59,24 @@ export function GeneratingMessage(): React.JSX.Element {
 export function AssistantMessage({ message }: Props): React.JSX.Element {
   return (
     <div>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-        {message}
-      </ReactMarkdown>
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .assistant-message {
+          animation: fadeIn 0.2s ease-in;
+        }
+      `}</style>
+      <div className="assistant-message">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {message}
+        </ReactMarkdown>
+      </div>
       <div className="h-16" />
     </div>
   )

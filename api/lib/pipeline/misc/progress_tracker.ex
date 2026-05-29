@@ -58,6 +58,13 @@ defmodule Api.Pipeline.ProgressTracker do
     |> Enum.map(&to_progress_map/1)
   end
 
+  @doc "Return an active job for a given chat ID as progress payloads."
+  def get_by_chat(chat_id) do
+    :ets.tab2list(@table)
+    |> Enum.filter(fn {_, _, _, cid, _, _, _, _} -> cid == chat_id end)
+    |> Enum.map(&to_progress_map/1)
+  end
+
   @doc "Return the current progress payload for a single job, or {:error, :not_found}."
   def to_progress_event(message_id) do
     case :ets.lookup(@table, message_id) do

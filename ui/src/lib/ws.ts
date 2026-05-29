@@ -1,3 +1,4 @@
+
 export class WebSocketManager {
   private ws: WebSocket | null = null;
   private userId: string;
@@ -77,7 +78,7 @@ export class WebSocketManager {
     }
   }
 
-  private handleIncomingResponse(message: any) {
+  private handleIncomingResponse(message: any, replace: boolean = false) {
     this.dispatch({
       type: "ADD_MESSAGE",
       payload: {
@@ -87,7 +88,8 @@ export class WebSocketManager {
           role: message.payload.role,
           content: message.payload.content || "",
           timestamp: message.payload.timestamp,
-        }
+        },
+        replace: replace,
       }
     });
   }
@@ -98,6 +100,41 @@ export class WebSocketManager {
       payload: {
         chatId: chat.payload.chat_id,
         name: chat.payload.chat_name
+      }
+    });
+  }
+
+  private comeUpWithACoolNameForThePipelineStage(stage: number): string {
+    switch (stage) {
+      case 1:
+        return "Extracting topic";
+      case 2:
+        return "Generating initial response";
+      case 3:
+        return "Finding related articles";
+      case 4:
+        return "Analyzing articles";
+      case 5:
+        return "Generating response";
+      case 6:
+        return "Finalizing response";
+      default:
+        return "Processing...";
+    }
+  }
+
+  private handlePipelineProgress(progress: any) {
+    this.dispatch({
+      type: "ADD_MESSAGE",
+      payload: {
+        chatId: progress.payload.chat_id,
+        message: {
+          id: progress.payload.message_id,
+          role: "generating",
+          content: this.comeUpWithACoolNameForThePipelineStage(progress.payload.stage),
+          timestamp: progress.payload.timestamp || new Date().toISOString(),
+        },
+        replace: true
       }
     });
   }
@@ -123,14 +160,20 @@ export class WebSocketManager {
 
     this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      // console.log("WebSocket message received:", data);
 
       switch (data.event) {
         case "response_complete":
+          this.handleIncomingResponse(data, true);
+          break;
         case "response_new":
-          this.handleIncomingResponse(data);
+          this.handleIncomingResponse(data, false);
           break;
         case "chat_rename":
           this.handleIncomingRename(data);
+          break;
+        case "pipeline_progress":
+          this.handlePipelineProgress(data);
           break;
         case "phx_reply":
           // We ignore them but they don't need to be logged

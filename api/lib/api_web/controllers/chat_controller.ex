@@ -71,17 +71,21 @@ defmodule ApiWeb.Controllers.ChatController do
     }
 
     with {:ok, message} <- Api.Message.new(message_params) do
-      %Api.Workers.RunPipelineJobArgs{
-        message: Api.Message.to_public(message),
-        api_key: conn.assigns[:api_key],
-        is_first_message: false
-      }
-      |> Api.Workers.RunPipelineJob.new()
-      |> Oban.insert()
+      with [] <- Api.Pipeline.ProgressTracker.get_by_chat(chat_id) do
+        %Api.Workers.RunPipelineJobArgs{
+          message: Api.Message.to_public(message),
+          api_key: conn.assigns[:api_key],
+          is_first_message: false
+        }
+        |> Api.Workers.RunPipelineJob.new()
+        |> Oban.insert()
 
-      conn
-      |> put_status(:ok)
-      |> json(Api.Message.to_public(message))
+        conn
+        |> put_status(:ok)
+        |> json(Api.Message.to_public(message))
+      else
+        _ -> conn |> put_status(:too_early) |> json(%{error: "Generation already running"})
+      end
     else
       _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to send message"})
     end
