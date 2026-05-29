@@ -26,12 +26,12 @@ defmodule ApiWeb.Controllers.ChatController do
            author_id: conn.assigns[:user_id]
          },
          {:ok, message} <- Api.Message.new(message_params) do
-      %Api.Workers.GenerateResponseJobArgs{
+      %Api.Workers.RunPipelineJobArgs{
         message: Api.Message.to_public(message),
         api_key: conn.assigns[:api_key],
         is_first_message: true
       }
-      |> Api.Workers.GenerateResponseJob.new()
+      |> Api.Workers.RunPipelineJob.new()
       |> Oban.insert()
 
       conn
@@ -71,12 +71,12 @@ defmodule ApiWeb.Controllers.ChatController do
     }
 
     with {:ok, message} <- Api.Message.new(message_params) do
-      %Api.Workers.GenerateResponseJobArgs{
+      %Api.Workers.RunPipelineJobArgs{
         message: Api.Message.to_public(message),
         api_key: conn.assigns[:api_key],
         is_first_message: false
       }
-      |> Api.Workers.GenerateResponseJob.new()
+      |> Api.Workers.RunPipelineJob.new()
       |> Oban.insert()
 
       conn

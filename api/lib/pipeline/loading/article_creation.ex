@@ -11,8 +11,9 @@ defmodule Api.Pipeline.CreateArticle do
       assigned relevance score.
   Notes:
    * Documents containing useful information for the knowledge base should be prioritized.
-   * Documents containing information like: tables of content, indexes, references, author
-       information, publication details, etc. should be considered less relevant.
+   * Documents containing introductions, table of contents, summaries, conclusions, or sections
+     that provide a high-level overview of the document-specific content should be considered
+     completely irrelevant.
   """
 
   @normalization_output_format %{
@@ -145,6 +146,32 @@ defmodule Api.Pipeline.CreateArticle do
     end
   end
 
+  @doc """
+  Processes a raw text chunk into a fully-formed `Api.Article` struct.
+
+  The pipeline performs the following steps:
+    1. Normalises the text and scores its relevance via an LLM call.
+    2. If the relevance score is below the configured threshold, the chunk is
+       dropped and `{:dropped, reason}` is returned.
+    3. Generates a title and description for the normalised text.
+    4. Produces embeddings for both the description and the full content.
+    5. Returns the assembled article with all fields populated.
+
+  ## Parameters
+
+    - `chunk` - A raw text string to process.
+
+  ## Return values
+
+    - `{:ok, %Api.Article{}}` – article was created successfully.
+    - `{:dropped, reason}` – chunk was below the minimum relevance threshold;
+      `reason` is a string explaining why.
+    - `{:error, reason}` – an LLM or embedding call failed.
+  """
+  @spec create_article(String.t()) ::
+          {:ok, Api.Article.t()}
+          | {:dropped, String.t()}
+          | {:error, any()}
   def create_article(chunk) do
     debug_enabled = Application.get_env(:api, Api.Loader)[:debug] || false
 
@@ -152,7 +179,7 @@ defmodule Api.Pipeline.CreateArticle do
       Application.get_env(:api, Api.Loader)[:embedding_model] || "openai/text-embedding-3-small"
 
     minimal_relevance_score =
-      Application.get_env(:api, Api.Loader)[:minimal_relevance_score] || 0.2
+      Application.get_env(:api, Api.Loader)[:minimal_relevance_score] || 0.5
 
     with {:ok, normalized_chunk, normalization_cost} <- normalize_and_assess(chunk) do
       if normalized_chunk["relevance_score"] >= minimal_relevance_score do

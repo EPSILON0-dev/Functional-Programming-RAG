@@ -129,7 +129,7 @@ defmodule ApiWeb.Controllers.ChatControllerTest do
       assert is_map(body["message"])
       assert body["chat"]["author_id"] == user.id
       assert body["message"]["content"] == "Hello"
-      assert_enqueued(worker: Api.Workers.GenerateResponseJob)
+      assert_enqueued(worker: Api.Workers.RunPipelineJob)
     end
 
     test "returns 403 without a selected api key", %{conn: conn} do
@@ -158,7 +158,7 @@ defmodule ApiWeb.Controllers.ChatControllerTest do
       body = json_response(conn, 200)
       assert body["content"] == "Follow-up"
       assert body["role"] == "user"
-      assert_enqueued(worker: Api.Workers.GenerateResponseJob)
+      assert_enqueued(worker: Api.Workers.RunPipelineJob)
     end
 
     test "allows sending a message to any existing chat (no ownership check)", %{conn: conn} do

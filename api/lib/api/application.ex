@@ -12,6 +12,7 @@ defmodule Api.Application do
       Api.Repo,
       {DNSCluster, query: Application.get_env(:api, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Api.PubSub},
+      Api.Pipeline.ProgressTracker,
       {Oban, Application.fetch_env!(:api, Oban)},
       # Start a worker by calling: Api.Worker.start_link(arg)
       # {Api.Worker, arg},

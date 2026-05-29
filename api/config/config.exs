@@ -35,9 +35,21 @@ config :phoenix, :json_library, Jason
 # Oban configuration
 config :api, Oban,
   repo: Api.Repo,
+  plugins: [
+    {Oban.Plugins.Cron,
+     crontab: [
+       # Cleans up stale `role: "generating"` messages left by crashed pipeline jobs
+       {"*/5 * * * *", Api.Workers.CleanupStaleGeneratingJob}
+     ]}
+  ],
   queues: [
     default: 10
   ]
+
+# Configuration for the RAG pipeline
+config :api, Api.Pipeline,
+  # Set to true to print each stage's LLM output to stdout
+  debug: true
 
 # Configuration for the document loader
 config :api, Api.Loader,
