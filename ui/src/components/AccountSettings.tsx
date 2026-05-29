@@ -11,42 +11,42 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AppContext } from "@/AppContext";
-import { useQuery } from "@tanstack/react-query";
-import { TrashIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface AccountSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-type Panel = "api-keys";
-
 export function AccountSettingsDialog({ open, onOpenChange }: AccountSettingsDialogProps) {
   const ctx = useContext(AppContext);
   const user = ctx?.state.currentUser;
+  const navigate = useNavigate();
 
-  const keys = useQuery({
-    queryKey: ["apiKeys"],
-    queryFn: async () => {
-      const res = await fetch("/api/auth/keys");
-      if (!res.ok) throw new Error("Failed to fetch API keys");
-      return res.json();
-    },
-  });
+  const [newUsername, setNewUsername] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [renameSuccess, setRenameSuccess] = useState(false);
 
-  const [panel, setPanel] = useState<Panel>("api-keys");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  const [newApiKeyName, setNewApiKeyName] = useState("");
-  const [newApiKeySecret, setNewApiKeySecret] = useState("");
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-  const [apiKeySuccess, setApiKeySuccess] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   function resetState() {
-    setPanel("api-keys");
-    setNewApiKeyName("");
-    setNewApiKeySecret("");
-    setApiKeyError(null);
-    setApiKeySuccess(false);
+    setNewUsername("");
+    setRenameError(null);
+    setRenameSuccess(false);
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    setDeleteError(null);
+    setDeleteConfirm(false);
   }
 
   function handleOpenChange(next: boolean) {
@@ -54,73 +54,81 @@ export function AccountSettingsDialog({ open, onOpenChange }: AccountSettingsDia
     if (!next) resetState();
   }
 
-  function handleSelectKey(selectedKeyId: string) {
-    fetch("/api/auth/keys/selected", {
-      "method": "POST",
-      "headers": { "Content-Type": "application/json" },
-      "body": JSON.stringify({ key_id: selectedKeyId }),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.json().then((data) => {
-            throw new Error(data.error || "Failed to set selected API key");
-          });
-        }
-        return res.json();
-      })
-      .then(() => {
-        keys.refetch();
-      })
-      .catch((err) => {
-        console.error("Error setting selected API key:", err);
-      });
-  }
-
-  function handleAddApiKey(e: React.FormEvent) {
+  function handleRename(e: React.FormEvent) {
     e.preventDefault();
-    setApiKeyError(null);
+    setRenameError(null);
+    setRenameSuccess(false);
 
-    fetch("/api/auth/keys", {
-      method: "POST",
+    fetch("/api/auth/me/username", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newApiKeyName, key: newApiKeySecret }),
+      body: JSON.stringify({ username: newUsername }),
     })
       .then((res) => {
         if (!res.ok) {
           return res.json().then((data) => {
-            throw new Error(data.error || "Failed to set API key");
+            throw new Error(data.error || "Failed to rename account");
+          });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        ctx?.dispatch({ type: "LOGIN", payload: { id: data.id, username: data.username } });
+        setRenameSuccess(true);
+        setNewUsername("");
+      })
+      .catch((err) => setRenameError(err.message));
+  }
+
+  function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    fetch("/api/auth/me/password", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          return res.json().then((data) => {
+            throw new Error(data.error || "Failed to change password");
           });
         }
         return res.json();
       })
       .then(() => {
-        setApiKeySuccess(true);
-        keys.refetch();
+        setPasswordSuccess(true);
+        setOldPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
       })
-      .catch((err) => {
-        setApiKeyError(err.message);
-        setApiKeySuccess(false);
-      });
+      .catch((err) => setPasswordError(err.message));
   }
 
-  function handleDeleteKey(selectedKeyId: string) {
-    fetch(`/api/auth/keys/${selectedKeyId}`, {
-      "method": "DELETE",
-      "headers": { "Content-Type": "application/json" },
-    })
+  function handleDeleteAccount() {
+    setDeleteError(null);
+
+    fetch("/api/auth/me", { method: "DELETE" })
       .then((res) => {
         if (!res.ok) {
           return res.json().then((data) => {
-            throw new Error(data.error || "Failed to delete API key");
+            throw new Error(data.error || "Failed to delete account");
           });
         }
+        return res.json();
       })
       .then(() => {
-        keys.refetch();
+        ctx?.dispatch({ type: "LOGOUT" });
+        navigate("/");
       })
-      .catch((err) => {
-        console.error("Error deleting API key:", err);
-      });
+      .catch((err) => setDeleteError(err.message));
   }
 
   return (
@@ -134,81 +142,94 @@ export function AccountSettingsDialog({ open, onOpenChange }: AccountSettingsDia
           </DialogDescription>
         </DialogHeader>
 
-        {/* Panel tabs */}
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant={panel === "api-keys" ? "default" : "outline"}
-            onClick={() => setPanel("api-keys")}
-          >
-            OpenRouter API Key
-          </Button>
-        </div>
+        {/* Rename */}
+        <form onSubmit={handleRename}>
+          <FieldGroup>
+            <Field>
+              <Label>Change Username</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="New username"
+                  autoComplete="off"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  required
+                />
+                <Button type="submit">Rename</Button>
+              </div>
+            </Field>
+          </FieldGroup>
+          {renameError && <p className="mt-1 text-sm text-destructive">{renameError}</p>}
+          {renameSuccess && (
+            <p className="mt-1 text-sm text-green-600 dark:text-green-400">Username updated.</p>
+          )}
+        </form>
 
-        {panel === "api-keys" && (
-          <form onSubmit={handleAddApiKey}>
-            <FieldGroup>
-              <ul className="space-y-1">
-                <Label className="pb-2">Select API Key</Label>
-                {Array.isArray(keys.data?.api_keys) && keys.data.api_keys.length > 0 ? keys.data.api_keys.map((key: any) => (
-                  <li
-                    key={key.id}
-                    className={`flex items-center justify-between rounded-md ${key.id === keys.data.selected_key_id
-                      ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                      : "bg-muted text-muted-foreground active:bg-secondary hover:bg-secondary/80"
-                      }`}
-                    onClick={() => { handleSelectKey(key.id) }}
-                  >
-                    <span className="ml-4 mr-2 text-sm select-none">{key.name}</span>
-                    <span className="mx-2 font-mono text-xs select-none">{key.key}</span>
-                    <Button
-                      variant="ghost"
-                      className="mx-1 my-1 w-8 h-8"
-                      onClick={() => { handleDeleteKey(key.id) }}
-                    >
-                      <TrashIcon />
-                    </Button>
-                  </li>
-                )) : <small><i>Add a key to start!</i></small>}
-                {Array.isArray(keys.data?.api_keys) && keys.data.api_keys.length > 0 && keys.data.api_keys.every((key: any) => key.id !== keys.data.selected_key_id) && (
-                  <li className="flex items-center justify-between rounded-md bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
-                    <span className="ml-4 mr-2 text-sm select-none">No key selected</span>
-                  </li>
-                )}
-              </ul>
-            </FieldGroup>
-            <FieldGroup className="pt-4">
-              <Field>
-                <Label>New API Key Name</Label>
-                <Input
-                  id="new-api-key-name"
-                  placeholder="Key name"
-                  autoComplete="off"
-                  value={newApiKeyName}
-                  onChange={(e) => setNewApiKeyName(e.target.value)}
-                  required
-                />
-                <Input
-                  id="new-api-key-secret"
-                  placeholder="sk-or-v1-..."
-                  autoComplete="off"
-                  value={newApiKeySecret}
-                  onChange={(e) => setNewApiKeySecret(e.target.value)}
-                  required
-                />
-              </Field>
-              <Button type="submit" className="mt-2">Add API Key</Button>
-            </FieldGroup>
-            {apiKeyError && (
-              <p className="mt-2 text-sm text-destructive">{apiKeyError}</p>
-            )}
-            {apiKeySuccess && (
-              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                API Key updated successfully.
-              </p>
-            )}
-          </form>
-        )}
+        <hr className="border-border" />
+
+        {/* Change password */}
+        <form onSubmit={handleChangePassword}>
+          <FieldGroup>
+            <Field>
+              <Label>Change Password</Label>
+              <Input
+                type="password"
+                placeholder="Current password"
+                autoComplete="current-password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                required
+              />
+              <Input
+                type="password"
+                placeholder="New password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Confirm new password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </Field>
+            <Button type="submit" className="mt-2">Change Password</Button>
+          </FieldGroup>
+          {passwordError && <p className="mt-1 text-sm text-destructive">{passwordError}</p>}
+          {passwordSuccess && (
+            <p className="mt-1 text-sm text-green-600 dark:text-green-400">Password changed.</p>
+          )}
+        </form>
+
+        <hr className="border-border" />
+
+        {/* Delete account */}
+        <FieldGroup>
+          <Label className="text-destructive">Danger Zone</Label>
+          {!deleteConfirm ? (
+            <Button
+              variant="destructive"
+              className="mt-1"
+              onClick={() => setDeleteConfirm(true)}
+            >
+              Delete Account
+            </Button>
+          ) : (
+            <div className="flex gap-2 mt-1">
+              <Button variant="destructive" onClick={handleDeleteAccount}>
+                Yes, delete my account
+              </Button>
+              <Button variant="outline" onClick={() => setDeleteConfirm(false)}>
+                Cancel
+              </Button>
+            </div>
+          )}
+          {deleteError && <p className="mt-1 text-sm text-destructive">{deleteError}</p>}
+        </FieldGroup>
       </DialogContent>
     </Dialog>
   );

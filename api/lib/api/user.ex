@@ -56,4 +56,28 @@ defmodule Api.User do
       _ -> {:error, "User not found"}
     end
   end
+
+  def rename(user_id, new_username) do
+    with {:ok, user} <- get_by_id(user_id) do
+      user
+      |> changeset(%{username: new_username})
+      |> Api.Repo.update()
+    end
+  end
+
+  def change_password(user_id, new_password_hash) do
+    with {:ok, user} <- get_by_id(user_id) do
+      user
+      |> change(%{password: new_password_hash})
+      |> Api.Repo.update()
+    end
+  end
+
+  def delete(user_id) do
+    with {:ok, user} <- get_by_id(user_id) do
+      user
+      |> change(%{deleted_at: DateTime.utc_now() |> DateTime.truncate(:second)})
+      |> Api.Repo.update()
+    end
+  end
 end

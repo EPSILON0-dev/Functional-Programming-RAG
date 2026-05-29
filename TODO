@@ -1,3 +1,0 @@
-* Add a tooltip next to the account when no key is added and a toast 
-* Add autoscroll
-* If the query and response have the same timestamp, put the resp below the query

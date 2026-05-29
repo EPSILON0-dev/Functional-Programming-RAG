@@ -148,4 +148,45 @@ defmodule ApiWeb.Controllers.UserController do
       _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
     end
   end
+
+  def rename(conn, %{"username" => username}) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, user} <- Api.User.rename(user_id, username) do
+      conn |> put_status(:ok) |> json(%{id: user.id, username: user.username})
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        if changeset.errors[:username] do
+          conn |> put_status(:conflict) |> json(%{error: "Username already taken"})
+        else
+          conn |> put_status(:unprocessable_entity) |> json(%{error: "Invalid username"})
+        end
+
+      _ ->
+        conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
+
+  def change_password(conn, %{"old_password" => old_password, "new_password" => new_password}) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, user} <- Api.User.get_by_id(user_id),
+         true <- Bcrypt.verify_pass(old_password, user.password),
+         {:ok, _} <- Api.User.change_password(user_id, hash_password(new_password)) do
+      conn |> put_status(:ok) |> json(%{message: "Password changed successfully"})
+    else
+      false -> conn |> put_status(:unauthorized) |> json(%{error: "Invalid current password"})
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
+
+  def delete_account(conn, _) do
+    with user_id when not is_nil(user_id) <- conn.assigns[:user_id],
+         {:ok, _} <- Api.User.delete(user_id) do
+      conn
+      |> delete_resp_cookie("authorization")
+      |> put_status(:ok)
+      |> json(%{message: "Account deleted successfully"})
+    else
+      _ -> conn |> put_status(:unauthorized) |> json(%{error: "Unauthorized"})
+    end
+  end
 end

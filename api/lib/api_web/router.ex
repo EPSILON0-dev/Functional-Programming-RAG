@@ -20,6 +20,9 @@ defmodule ApiWeb.Router do
     pipe_through(:auth_api)
 
     get("/me", Controllers.UserController, :me)
+    patch("/me/username", Controllers.UserController, :rename)
+    patch("/me/password", Controllers.UserController, :change_password)
+    delete("/me", Controllers.UserController, :delete_account)
     get("/wstoken", Controllers.UserController, :wstoken)
 
     get("/keys", Controllers.UserController, :get_api_keys)
