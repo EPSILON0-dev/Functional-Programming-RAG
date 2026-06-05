@@ -1,5 +1,5 @@
 import { createContext, useEffect, useReducer } from "react";
-import type { Conversation, Message, NamedIdentifier } from "./types";
+import type { Conversation, Message, NamedIdentifier } from "./types/types";
 import { QueryClient } from "@tanstack/react-query";
 import { authGetCurrentUser, authLogout, type AuthUser } from "./lib/auth";
 import { WebSocketManager } from "./lib/ws";

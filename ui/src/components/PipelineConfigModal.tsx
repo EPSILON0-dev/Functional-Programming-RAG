@@ -28,14 +28,9 @@ interface Props {
 }
 
 const MODEL_OPTIONS = [
-  { value: "openai/gpt-4.1-nano", label: "GPT-4.1 Nano" },
-  { value: "openai/gpt-4.1-mini", label: "GPT-4.1 Mini" },
-  { value: "openai/gpt-4.1", label: "GPT-4.1" },
-  { value: "anthropic/claude-3.5-haiku", label: "Claude 3.5 Haiku" },
-  { value: "anthropic/claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
-  { value: "anthropic/claude-3.7-sonnet", label: "Claude 3.7 Sonnet" },
-  { value: "google/gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-  { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  { value: "openai/gpt-5.4-nano", label: "GPT-5.4 Nano" },
+  { value: "openai/gpt-5.4-mini", label: "GPT-5.4 Mini" },
+  { value: "openai/gpt-5.4", label: "GPT-5.4" },
 ]
 
 type Tab = "presets" | "models" | "retrieval" | "generation" | "reranking"

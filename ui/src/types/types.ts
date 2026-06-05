@@ -1,9 +1,15 @@
+export interface MessageMetadata
+{
+    error?: string;
+}
+
 export interface Message 
 {
     id: string;
     role: "user" | "generating" | "error" | "assistant";
     content: string;
     timestamp: string;
+    metadata?: MessageMetadata;
 }
 
 export interface NamedIdentifier

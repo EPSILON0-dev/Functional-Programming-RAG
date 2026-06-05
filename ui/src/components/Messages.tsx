@@ -82,12 +82,13 @@ export function AssistantMessage({ message }: Props): React.JSX.Element {
   )
 }
 
-export function ErrorMessage({ message }: Props): React.JSX.Element {
+export function ErrorMessage({ message, details }: { message: string, details?: string }): React.JSX.Element {
   return (
     <div>
       <div className="outline-1 outline-destructive/50 rounded-2xl px-4 py-2 max-w-2xl mr-auto w-fit">
         <IconAlertTriangle size="20" className="text-destructive inline-block mr-2" />
         {message}
+        {details && <div className="text-destructive text-xs mt-1">{details}</div>}
       </div>
       <div className="h-8" />
     </div>

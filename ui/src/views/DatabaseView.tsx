@@ -2,7 +2,8 @@ import React from "react";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { IconBooks, IconArrowLeft, IconChevronLeft, IconChevronRight, IconX } from "@tabler/icons-react"
-import type { Article, ArticlesListResponse } from '@/types';
+import { ErrorBoundary } from "@/components/ErrorBoundary"
+import type { Article, ArticlesListResponse } from '@/types/types';
 import { SearchInput } from "@/components/SearchInput";
 import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
 
@@ -92,18 +93,20 @@ export function DatabaseView(): React.JSX.Element {
           </div>
         </header>
         <div className="max-w-3xl min-w-0 mx-auto w-full px-4 py-8 overflow-y-auto">
-          {detailLoading ? (
-            <p className="text-muted-foreground text-center py-12">Loading article…</p>
-          ) : articleDetail ? (
-            <>
-              <h2 className="text-2xl font-bold mb-2">{articleDetail.title}</h2>
-              <p className="text-muted-foreground mb-6 italic">{articleDetail.description}</p>
-              <hr className="mb-6" />
-              <p className="leading-relaxed whitespace-pre-wrap">{articleDetail.content}</p>
-            </>
-          ) : (
-            <p className="text-muted-foreground text-center py-12">Article not found.</p>
-          )}
+          <ErrorBoundary>
+            {detailLoading ? (
+              <p className="text-muted-foreground text-center py-12">Loading article…</p>
+            ) : articleDetail ? (
+              <>
+                <h2 className="text-2xl font-bold mb-2">{articleDetail.title}</h2>
+                <p className="text-muted-foreground mb-6 italic">{articleDetail.description}</p>
+                <hr className="mb-6" />
+                <p className="leading-relaxed whitespace-pre-wrap">{articleDetail.content}</p>
+              </>
+            ) : (
+              <p className="text-muted-foreground text-center py-12">Article not found.</p>
+            )}
+          </ErrorBoundary>
         </div>
       </div>
     )
@@ -137,26 +140,28 @@ export function DatabaseView(): React.JSX.Element {
       </header>
       <div className="max-w-4xl min-w-0 mx-auto w-full px-4 flex flex-col flex-1 overflow-hidden">
         <main className="p-4 flex-1 overflow-y-auto">
-          {isLoading ? (
-            <p className="text-muted-foreground text-center py-12">Loading articles…</p>
-          ) : isError ? (
-            <p className="text-destructive text-center py-12">Failed to load articles.</p>
-          ) : articles.length === 0 ? (
-            <p className="text-muted-foreground text-center py-12">{isSearching ? "No articles match your search." : "No articles found."}</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {articles.map((item) => (
-                <Card
-                  key={item.id}
-                  className="m-0 p-4 cursor-pointer hover:shadow-md transition-shadow flex flex-col gap-2"
-                  onClick={() => setSelectedArticleId(item.id)}
-                >
-                  <CardTitle className="text-base leading-snug">{item.title}</CardTitle>
-                  <CardDescription className="line-clamp-3">{item.description}</CardDescription>
-                </Card>
-              ))}
-            </div>
-          )}
+          <ErrorBoundary>
+            {isLoading ? (
+              <p className="text-muted-foreground text-center py-12">Loading articles…</p>
+            ) : isError ? (
+              <p className="text-destructive text-center py-12">Failed to load articles.</p>
+            ) : articles.length === 0 ? (
+              <p className="text-muted-foreground text-center py-12">{isSearching ? "No articles match your search." : "No articles found."}</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {articles.map((item) => (
+                  <Card
+                    key={item.id}
+                    className="m-0 p-4 cursor-pointer hover:shadow-md transition-shadow flex flex-col gap-2"
+                    onClick={() => setSelectedArticleId(item.id)}
+                  >
+                    <CardTitle className="text-base leading-snug">{item.title}</CardTitle>
+                    <CardDescription className="line-clamp-3">{item.description}</CardDescription>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ErrorBoundary>
         </main>
         <div className="shrink-0 py-4 flex items-center justify-center gap-1 flex-wrap">
           {!isSearching && (<>

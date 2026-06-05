@@ -3,7 +3,8 @@ import { ChatInput } from "../components/ChatInput"
 // import { DatabaseDropdown } from "../components/DatabaseDropdown"
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "@/AppContext";
-import type { Conversation, Message } from "@/types";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import type { Conversation, Message } from "@/types/types";
 import { toast } from "sonner";
 
 export function NewChatView(): React.JSX.Element {
@@ -42,7 +43,9 @@ export function NewChatView(): React.JSX.Element {
             <main className="m-auto max-w-4xl w-full">
                 <div className="mx-8">
                     <h1 className="text-3xl text-center mb-12">Ask a question!</h1>
-                    <ChatInput onMessageSent={startNewChat} />
+                    <ErrorBoundary>
+                        <ChatInput onMessageSent={startNewChat} />
+                    </ErrorBoundary>
                     {/*<div className="ml-2 mt-2">
                         <DatabaseDropdown />
                     </div>*/}

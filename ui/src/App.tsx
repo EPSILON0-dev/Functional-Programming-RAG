@@ -9,13 +9,18 @@ import { NavSidebar } from "./views/NavSidebar";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { Toaster } from "./components/ui/sonner";
 import { useContext } from "react";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import './App.css'
 
 function Layout() {
   return (
     <SidebarProvider>
-      <NavSidebar />
-      <Outlet />
+      <ErrorBoundary>
+        <NavSidebar />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
     </SidebarProvider>
   );
 }
@@ -26,19 +31,19 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <NewChatView />
+        element: <ErrorBoundary><NewChatView /></ErrorBoundary>
       },
       {
         path: "/chat/:chatId",
-        element: <ChatView />
+        element: <ErrorBoundary><ChatView /></ErrorBoundary>
       },
       {
         path: "/database/:databaseId",
-        element: <DatabaseView />
+        element: <ErrorBoundary><DatabaseView /></ErrorBoundary>
       },
       {
         path: "/explore",
-        element: <DatabaseView />
+        element: <ErrorBoundary><DatabaseView /></ErrorBoundary>
       },
     ]
   },
@@ -52,17 +57,23 @@ function AuthGate() {
     return <AuthView />;
   }
 
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppProvider>
-        <AuthGate />
-        <Toaster />
-      </AppProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AppProvider>
+          <AuthGate />
+          <Toaster />
+        </AppProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

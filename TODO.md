@@ -1,11 +1,11 @@
 # TODO
 
 [x] Make the pipeline use the user's API key
-[ ] Add pipeline config modal + presets stored in localstorage
-[ ] Add error boundries
-[ ] Change the error message to display the actual error
+[x] Add pipeline config modal + presets stored in localstorage
+[x] Add error boundries
+[ ] Add better models
+[x] Change the error message to display the actual error
 [ ] Fix the generating animation
-[ ] Remove the last error on new generation
 [ ] Add message info (references, model, cost)
 [ ] Improve the Markdown renderer
 [ ] Write some docs

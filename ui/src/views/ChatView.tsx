@@ -8,9 +8,10 @@ import {
 import { ChatInput } from "../components/ChatInput"
 import { AppContext } from "@/AppContext";
 import { useContext, useEffect, useState } from "react";
-import type { Message } from "@/types";
+import type { Message } from "@/types/types";
 import { IconAlertTriangleFilled } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Card,
   CardHeader,
@@ -136,25 +137,30 @@ export function ChatView(): React.JSX.Element {
               </Card>
             </div>
           ) :
-            messages?.map((item, index) => (
-              <div key={index}>
-                {item.role === "user" ? (
-                  <UserMessage message={item.content} />
-                ) : item.role === "assistant" ? (
-                  <AssistantMessage message={item.content} />
-                ) : item.role === "generating" ? (
-                  <GeneratingMessage message={item.content} />
-                ) : (
-                  <ErrorMessage message="Response error, check your API key" />
-                )}
-              </div>
-            ))}
+            <ErrorBoundary>
+              {messages?.map((item, index) => (
+                <div key={index}>
+                  {item.role === "user" ? (
+                    <UserMessage message={item.content} />
+                  ) : item.role === "assistant" ? (
+                    <AssistantMessage message={item.content} />
+                  ) : item.role === "generating" ? (
+                    <GeneratingMessage message={item.content} />
+                  ) : (
+                    <ErrorMessage message={item.content} details={item.metadata?.error} />
+                  )}
+                </div>
+              ))}
+            </ErrorBoundary>
+          }
         </div>
       </main>
 
       <footer className="shrink-0 px-4 py-2 border-t">
         <div className="max-w-4xl min-w-0 mx-auto h-full px-4">
-          <ChatInput onMessageSent={onMessageSent} />
+          <ErrorBoundary>
+            <ChatInput onMessageSent={onMessageSent} />
+          </ErrorBoundary>
         </div>
       </footer>
     </div>
