@@ -2,13 +2,6 @@ defmodule Api.Pipeline.EmbeddingRetrieval do
   import Ecto.Query
   import Pgvector.Ecto.Query
 
-  # Each of the two query embeddings (question + uninformed response) is searched against
-  # both content_embedding and description_embedding, yielding up to 4 × limit candidates
-  # before deduplication.
-  @per_search_limit 10
-
-  @embedding_model "openai/text-embedding-3-small"
-
   @doc """
   Retry a function up to `max_attempts` times (default 3).
   Expects the function to return a tuple starting with `:ok` or `:error`.
@@ -35,11 +28,9 @@ defmodule Api.Pipeline.EmbeddingRetrieval do
 
   Returns `{:ok, articles, total_cost}` or `{:error, reason}`.
   """
-  def run(question, uninformed_response) do
-    key = System.get_env("OPENROUTER_API_KEY") || ""
-
-    model =
-      Application.get_env(:api, Api.Loader)[:embedding_model] || @embedding_model
+  def run(question, uninformed_response, config) do
+    key = config.api_key
+    model = config.embedding_model
 
     with {:ok, query_embedding} <-
            Api.Provider.OpenRouter.generate_embedding(key, question, model),
@@ -49,10 +40,10 @@ defmodule Api.Pipeline.EmbeddingRetrieval do
       r_vec = Pgvector.new(response_embedding.embedding)
 
       articles =
-        (search_by_content(q_vec) ++
-           search_by_description(q_vec) ++
-           search_by_content(r_vec) ++
-           search_by_description(r_vec))
+        (search_by_content(q_vec, config) ++
+           search_by_description(q_vec, config) ++
+           search_by_content(r_vec, config) ++
+           search_by_description(r_vec, config))
         |> Enum.uniq_by(& &1.id)
 
       Api.Pipeline.Debug.log("EmbeddingRetrieval", Enum.map(articles, & &1.title))
@@ -62,20 +53,20 @@ defmodule Api.Pipeline.EmbeddingRetrieval do
     end
   end
 
-  defp search_by_content(vec) do
+  defp search_by_content(vec, config) do
     from(a in Api.Article,
       where: not is_nil(a.content_embedding),
       order_by: cosine_distance(a.content_embedding, ^vec),
-      limit: @per_search_limit
+      limit: ^config.per_search_limit
     )
     |> Api.Repo.all()
   end
 
-  defp search_by_description(vec) do
+  defp search_by_description(vec, config) do
     from(a in Api.Article,
       where: not is_nil(a.description_embedding),
       order_by: cosine_distance(a.description_embedding, ^vec),
-      limit: @per_search_limit
+      limit: ^config.per_search_limit
     )
     |> Api.Repo.all()
   end

@@ -1,18 +1,4 @@
 defmodule Api.Pipeline.Generation do
-  # Number of candidate responses to generate in parallel.
-  @parallel_generations 2
-
-  @llm_model "openai/gpt-4.1"
-
-  @generation_options %Api.Provider.Options{
-    temperature: 0.7,
-    top_p: 0.95,
-    presence_penalty: 0.1,
-    frequency_penalty: 0.0,
-    reasoning_enabled: true,
-    reasoning_effort: "low"
-  }
-
   @system_prompt_prefix """
   You are a helpful assistant with access to a curated knowledge base.
   Use the following articles to answer the user's question.
@@ -23,7 +9,7 @@ defmodule Api.Pipeline.Generation do
   """
 
   @doc """
-  Generates `@parallel_generations` candidate responses using the conversation history,
+  Generates candidate responses using the conversation history,
   the current question, and the top reranked articles.
 
   `conversation_history` is a list of `%{role: "user"|"assistant", content: String.t()}` maps
@@ -32,12 +18,17 @@ defmodule Api.Pipeline.Generation do
   Returns `{:ok, candidates, total_cost}` where `candidates` is a list of
   `%{content: String.t(), cost: float()}` maps, or `{:error, reason}`.
   """
-  def run(conversation_history, question, articles) do
-    key = System.get_env("OPENROUTER_API_KEY") || ""
+  def run(conversation_history, question, articles, config) do
+    key = config.api_key
 
     options = %Api.Provider.Options{
-      @generation_options
-      | model: @llm_model
+      model: config.generation_model,
+      temperature: config.generation_temperature,
+      top_p: config.generation_top_p,
+      presence_penalty: 0.1,
+      frequency_penalty: 0.0,
+      reasoning_enabled: config.generation_reasoning_enabled,
+      reasoning_effort: config.generation_reasoning_effort
     }
 
     system_prompt = @system_prompt_prefix <> format_articles(articles)
@@ -48,7 +39,7 @@ defmodule Api.Pipeline.Generation do
         [%{role: "user", content: question}]
 
     tasks =
-      for _ <- 1..@parallel_generations do
+      for _ <- 1..config.parallel_generations do
         Task.async(fn -> Api.Provider.OpenRouter.generate_response(key, input, options) end)
       end
 

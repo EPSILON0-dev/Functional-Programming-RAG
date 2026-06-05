@@ -1,19 +1,4 @@
 defmodule Api.Pipeline.RerankStage do
-  # When true, runs two parallel scoring passes with documents in opposite orders
-  # and averages the scores to counteract positional bias ("lost in the middle" effect).
-  @double_rerank true
-
-  # Number of top documents to return after reranking.
-  @top_k 10
-
-  @llm_model "openai/gpt-4.1-mini"
-
-  @generation_options %Api.Provider.Options{
-    temperature: 0.0,
-    top_p: 1.0,
-    reasoning_enabled: false
-  }
-
   @rerank_prompt """
   You are a relevance scoring assistant.
   Given a question and a list of documents (each with a title and description),
@@ -40,36 +25,36 @@ defmodule Api.Pipeline.RerankStage do
   }
 
   @doc """
-  Reranks `articles` by relevance to `normalized_query` and returns the top #{@top_k}.
-  When `@double_rerank` is true, two parallel passes (normal + reversed document order)
+  Reranks `articles` by relevance to `normalized_query` and returns the top documents.
+  When `config.rerank_double_pass_enabled` is true, two parallel passes (normal + reversed document order)
   are run and their scores averaged before ranking.
 
   Returns `{:ok, top_articles, total_cost}` or `{:error, reason}`.
   """
   def run(_normalized_query, articles) when articles == [], do: {:ok, [], 0.0}
 
-  def run(normalized_query, articles) do
-    if @double_rerank do
-      run_double_rerank(normalized_query, articles)
+  def run(normalized_query, articles, config) do
+    if config.rerank_double_pass_enabled do
+      run_double_rerank(normalized_query, articles, config)
     else
-      run_single_rerank(normalized_query, articles)
+      run_single_rerank(normalized_query, articles, config)
     end
   end
 
-  defp run_single_rerank(normalized_query, articles) do
-    with {:ok, scores, cost} <- score_articles(normalized_query, articles) do
-      top = select_top(articles, scores)
+  defp run_single_rerank(normalized_query, articles, config) do
+    with {:ok, scores, cost} <- score_articles(normalized_query, articles, config) do
+      top = select_top(articles, scores, config)
       Api.Pipeline.Debug.log("RerankStage/scores", Enum.zip(Enum.map(articles, & &1.title), scores))
       Api.Pipeline.Debug.log("RerankStage/top_articles", Enum.map(top, & &1.title))
       {:ok, top, cost}
     end
   end
 
-  defp run_double_rerank(normalized_query, articles) do
+  defp run_double_rerank(normalized_query, articles, config) do
     reversed = Enum.reverse(articles)
 
-    task1 = Task.async(fn -> score_articles(normalized_query, articles) end)
-    task2 = Task.async(fn -> score_articles(normalized_query, reversed) end)
+    task1 = Task.async(fn -> score_articles(normalized_query, articles, config) end)
+    task2 = Task.async(fn -> score_articles(normalized_query, reversed, config) end)
 
     result1 = Task.await(task1, 60_000)
     result2 = Task.await(task2, 60_000)
@@ -83,7 +68,7 @@ defmodule Api.Pipeline.RerankStage do
         Enum.zip(scores1, scores2)
         |> Enum.map(fn {s1, s2} -> (s1 + s2) / 2.0 end)
 
-      top = select_top(articles, averaged)
+      top = select_top(articles, averaged, config)
       Api.Pipeline.Debug.log("RerankStage/scores_pass1", Enum.zip(Enum.map(articles, & &1.title), scores1))
       Api.Pipeline.Debug.log("RerankStage/scores_pass2", Enum.zip(Enum.map(articles, & &1.title), scores2))
       Api.Pipeline.Debug.log("RerankStage/scores_averaged", Enum.zip(Enum.map(articles, & &1.title), averaged))
@@ -93,13 +78,15 @@ defmodule Api.Pipeline.RerankStage do
     end
   end
 
-  defp score_articles(normalized_query, articles) do
-    key = System.get_env("OPENROUTER_API_KEY") || ""
+  defp score_articles(normalized_query, articles, config) do
+    key = config.api_key
 
     options = %Api.Provider.Options{
-      @generation_options
-      | model: @llm_model,
-        format: @output_format
+      model: config.rerank_model,
+      temperature: config.rerank_temperature,
+      top_p: config.rerank_top_p,
+      reasoning_enabled: false,
+      format: @output_format
     }
 
     docs_text =
@@ -131,10 +118,10 @@ defmodule Api.Pipeline.RerankStage do
     end, 3)
   end
 
-  defp select_top(articles, scores) do
+  defp select_top(articles, scores, config) do
     Enum.zip(articles, scores)
     |> Enum.sort_by(fn {_article, score} -> score end, :desc)
-    |> Enum.take(@top_k)
+    |> Enum.take(config.rerank_top_k)
     |> Enum.map(fn {article, _score} -> article end)
   end
 end

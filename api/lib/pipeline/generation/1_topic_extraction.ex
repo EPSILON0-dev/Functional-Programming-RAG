@@ -1,14 +1,4 @@
 defmodule Api.Pipeline.TopicExtraction do
-  @llm_model "openai/gpt-4.1-mini"
-
-  @generation_options %Api.Provider.Options{
-    temperature: 0.1,
-    top_p: 0.9,
-    presence_penalty: 0.0,
-    frequency_penalty: 0.0,
-    reasoning_enabled: false
-  }
-
   @system_prompt """
   You are an assistant that analyzes user questions in the context of a conversation.
   Perform the following tasks:
@@ -53,8 +43,6 @@ defmodule Api.Pipeline.TopicExtraction do
     type: "json_schema"
   }
 
-  @kb_needed_threshold 0.5
-
   @doc """
   Analyzes the question in context of conversation history.
   `conversation_history` is a list of `%{role: "user"|"assistant", content: String.t()}` maps
@@ -68,13 +56,17 @@ defmodule Api.Pipeline.TopicExtraction do
     - `:keywords` — list of strings
     - `:cost` — float, total API cost
   """
-  def run(conversation_history, question) do
-    key = System.get_env("OPENROUTER_API_KEY") || ""
+  def run(conversation_history, question, config) do
+    key = config.api_key
 
     options = %Api.Provider.Options{
-      @generation_options
-      | model: @llm_model,
-        format: @output_format
+      model: config.topic_extraction_model,
+      temperature: config.topic_extraction_temperature,
+      top_p: config.topic_extraction_top_p,
+      presence_penalty: 0.0,
+      frequency_penalty: 0.0,
+      reasoning_enabled: false,
+      format: @output_format
     }
 
     input =
@@ -89,7 +81,7 @@ defmodule Api.Pipeline.TopicExtraction do
 
         {:ok,
          %{
-           kb_needed: result["kb_needed_score"] >= @kb_needed_threshold,
+           kb_needed: result["kb_needed_score"] >= config.topic_extraction_kb_needed_threshold,
            kb_score: result["kb_needed_score"],
            kb_reason: result["kb_needed_reason"],
            normalized_query: result["normalized_query"],

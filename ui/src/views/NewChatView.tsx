@@ -11,13 +11,13 @@ export function NewChatView(): React.JSX.Element {
     const ctx = useContext(AppContext);
 
     // TODO add chat
-    const startNewChat = async (message: string): Promise<void> => {
+    const startNewChat = async (message: string, config?: any): Promise<void> => {
         const response = await fetch("/api/chats/new", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ first_message: message }),
+            body: JSON.stringify({ first_message: message, config }),
         }).catch((error) => {
             console.error("Error sending message:", error)
         })

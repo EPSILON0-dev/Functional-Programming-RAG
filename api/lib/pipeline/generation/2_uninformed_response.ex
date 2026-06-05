@@ -1,14 +1,4 @@
 defmodule Api.Pipeline.UninformedResponse do
-  @llm_model "openai/gpt-4.1"
-
-  @generation_options %Api.Provider.Options{
-    temperature: 0.7,
-    top_p: 0.95,
-    presence_penalty: 0.0,
-    frequency_penalty: 0.0,
-    reasoning_enabled: false
-  }
-
   @system_prompt """
   You are a helpful and knowledgeable assistant. Assisting in learning functional programming.
   Answer the user's question based on the conversation history and your general knowledge.
@@ -23,12 +13,16 @@ defmodule Api.Pipeline.UninformedResponse do
 
   Returns `{:ok, %{response: String.t(), cost: float()}}` or `{:error, reason}`.
   """
-  def run(conversation_history, question) do
-    key = System.get_env("OPENROUTER_API_KEY") || ""
+  def run(conversation_history, question, config) do
+    key = config.api_key
 
     options = %Api.Provider.Options{
-      @generation_options
-      | model: @llm_model
+      model: config.uninformed_response_model,
+      temperature: config.uninformed_response_temperature,
+      top_p: config.uninformed_response_top_p,
+      presence_penalty: 0.0,
+      frequency_penalty: 0.0,
+      reasoning_enabled: false
     }
 
     input =

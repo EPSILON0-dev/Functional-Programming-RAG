@@ -35,6 +35,7 @@ defmodule Api.Workers.RunPipelineJob do
     question = args["message"]["content"]
     api_key = args["api_key"]
     is_first_message = args["is_first_message"]
+    config_arg = args["config"]
 
     with {:ok, gen_message} <-
            Api.Message.new(%{
@@ -43,7 +44,9 @@ defmodule Api.Workers.RunPipelineJob do
              "chat_id" => chat_id,
              "author_id" => nil
            }),
-         {:ok, history} <- get_conversation_history(chat_id, user_id, message_id) do
+         {:ok, history} <- get_conversation_history(chat_id, user_id, message_id),
+         {:ok, config} <-
+           validate_config(config_arg, api_key) do
       Api.Pipeline.ProgressTracker.start_job(gen_message.id, chat_id, user_id)
       broadcast_response_new(gen_message, user_id)
 
@@ -54,7 +57,8 @@ defmodule Api.Workers.RunPipelineJob do
         history: history,
         question: question,
         api_key: api_key,
-        is_first_message: is_first_message
+        is_first_message: is_first_message,
+        config: config
       }
 
       run_stage1(state)
@@ -70,7 +74,7 @@ defmodule Api.Workers.RunPipelineJob do
   defp run_stage1(state) do
     advance_stage(state, 1, "topic_extraction")
 
-    case Api.Pipeline.TopicExtraction.run(state.history, state.question) do
+    case Api.Pipeline.TopicExtraction.run(state.history, state.question, state.config) do
       {:ok, topic} ->
         state = %{state | cost: state.cost + topic.cost, topic: topic}
 
@@ -89,7 +93,7 @@ defmodule Api.Workers.RunPipelineJob do
   defp run_stage2_short_circuit(state) do
     advance_stage(state, 2, "uninformed_response")
 
-    case Api.Pipeline.UninformedResponse.run(state.history, state.question) do
+    case Api.Pipeline.UninformedResponse.run(state.history, state.question, state.config) do
       {:ok, uninformed} ->
         finalize(state, uninformed.response, %{
           total_cost: state.cost + uninformed.cost,
@@ -107,7 +111,7 @@ defmodule Api.Workers.RunPipelineJob do
   defp run_stage2(state) do
     advance_stage(state, 2, "uninformed_response")
 
-    case Api.Pipeline.UninformedResponse.run(state.history, state.question) do
+    case Api.Pipeline.UninformedResponse.run(state.history, state.question, state.config) do
       {:ok, uninformed} ->
         run_stage3(%{
           state
@@ -123,7 +127,11 @@ defmodule Api.Workers.RunPipelineJob do
   defp run_stage3(state) do
     advance_stage(state, 3, "retrieval")
 
-    case Api.Pipeline.EmbeddingRetrieval.run(state.question, state.uninformed_response) do
+    case Api.Pipeline.EmbeddingRetrieval.run(
+           state.question,
+           state.uninformed_response,
+           state.config
+         ) do
       {:ok, articles, cost} ->
         run_stage4(%{state | cost: state.cost + cost, articles: articles})
 
@@ -135,7 +143,7 @@ defmodule Api.Workers.RunPipelineJob do
   defp run_stage4(state) do
     advance_stage(state, 4, "rerank")
 
-    case Api.Pipeline.RerankStage.run(state.topic.normalized_query, state.articles) do
+    case Api.Pipeline.RerankStage.run(state.topic.normalized_query, state.articles, state.config) do
       {:ok, top_articles, cost} ->
         run_stage5(%{state | cost: state.cost + cost, top_articles: top_articles})
 
@@ -147,7 +155,12 @@ defmodule Api.Workers.RunPipelineJob do
   defp run_stage5(state) do
     advance_stage(state, 5, "generation")
 
-    case Api.Pipeline.Generation.run(state.history, state.question, state.top_articles) do
+    case Api.Pipeline.Generation.run(
+           state.history,
+           state.question,
+           state.top_articles,
+           state.config
+         ) do
       {:ok, candidates, cost} ->
         run_stage6(%{state | cost: state.cost + cost, candidates: candidates})
 
@@ -159,7 +172,7 @@ defmodule Api.Workers.RunPipelineJob do
   defp run_stage6(state) do
     advance_stage(state, 6, "response_rerank")
 
-    case Api.Pipeline.ResponseRerank.run(state.question, state.candidates) do
+    case Api.Pipeline.ResponseRerank.run(state.question, state.candidates, state.config) do
       {:ok, best} ->
         total_cost = state.cost + best.cost
 
@@ -219,6 +232,59 @@ defmodule Api.Workers.RunPipelineJob do
 
     Api.Pipeline.ProgressTracker.complete_job(state.gen_id)
     {:error, reason}
+  end
+
+  defp validate_config(nil, api_key) do
+    config = %Api.Pipeline.GenerationConfig{api_key: api_key}
+    Api.Pipeline.GenerationConfig.validate(config)
+  end
+
+  defp validate_config(config_map, api_key) when is_map(config_map) do
+    config = %Api.Pipeline.GenerationConfig{
+      api_key: api_key,
+      topic_extraction_model:
+        config_map["topic_extraction_model"] ||
+          "openai/gpt-4.1-mini",
+      topic_extraction_temperature:
+        config_map["topic_extraction_temperature"] || 0.1,
+      topic_extraction_top_p: config_map["topic_extraction_top_p"] || 0.9,
+      topic_extraction_kb_needed_threshold:
+        config_map["topic_extraction_kb_needed_threshold"] || 0.5,
+      uninformed_response_model:
+        config_map["uninformed_response_model"] || "openai/gpt-4.1",
+      uninformed_response_temperature:
+        config_map["uninformed_response_temperature"] || 0.7,
+      uninformed_response_top_p:
+        config_map["uninformed_response_top_p"] || 0.95,
+      embedding_model:
+        System.get_env("EMBEDDING_MODEL") || "openai/text-embedding-3-small",
+      per_search_limit: config_map["per_search_limit"] || 10,
+      rerank_double_pass_enabled:
+        config_map["rerank_double_pass_enabled"] || true,
+      rerank_top_k: config_map["rerank_top_k"] || 10,
+      rerank_model: config_map["rerank_model"] || "openai/gpt-4.1-mini",
+      rerank_temperature: config_map["rerank_temperature"] || 0.0,
+      rerank_top_p: config_map["rerank_top_p"] || 1.0,
+      parallel_generations: config_map["parallel_generations"] || 2,
+      generation_model: config_map["generation_model"] || "openai/gpt-4.1",
+      generation_temperature: config_map["generation_temperature"] || 0.7,
+      generation_top_p: config_map["generation_top_p"] || 0.95,
+      generation_reasoning_enabled:
+        config_map["generation_reasoning_enabled"] || true,
+      generation_reasoning_effort:
+        config_map["generation_reasoning_effort"] || "low",
+      response_rerank_model:
+        config_map["response_rerank_model"] || "openai/gpt-4.1-mini",
+      response_rerank_temperature:
+        config_map["response_rerank_temperature"] || 0.0,
+      response_rerank_top_p: config_map["response_rerank_top_p"] || 1.0
+    }
+
+    Api.Pipeline.GenerationConfig.validate(config)
+  end
+
+  defp validate_config(config = %Api.Pipeline.GenerationConfig{}, _api_key) do
+    Api.Pipeline.GenerationConfig.validate(config)
   end
 
   # ---------------------------------------------------------------------------

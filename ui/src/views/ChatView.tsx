@@ -49,21 +49,23 @@ export function ChatView(): React.JSX.Element {
 
   const messages = chatId ? ctx?.state.messages[chatId] : undefined;
 
-  const onMessageSent = async (message: string) => {
+  const onMessageSent = async (message: string, config: any) => {
     if (!chatId) return;
 
-    await fetch(`/api/chats/${chatId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ content: message }),
-    }).then(async (response) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: message, config }),
+      });
+
       if (response.ok) {
-        const message = await response.json();
+        const confirmMessage = await response.json();
         ctx?.dispatch({
           type: "ADD_MESSAGE",
-          payload: { chatId, message },
+          payload: { chatId, message: confirmMessage },
         });
       } else if (response.status === 425) {
         console.error("Server is still processing previous message");
@@ -76,9 +78,9 @@ export function ChatView(): React.JSX.Element {
           description: "An error occurred while sending message. Please verify the API key and try again."
         });
       }
-    }).catch((error) => {
-      console.error("Error sending message:", error)
-    })
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   }
 
   const handleRefresh = () => {

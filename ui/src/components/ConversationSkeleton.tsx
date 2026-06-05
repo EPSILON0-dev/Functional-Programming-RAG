@@ -13,7 +13,7 @@ export function ConversationSkeleton(): React.JSX.Element {
         <SidebarMenu>
             {rows.map((_, i) => (
                 <SidebarMenuItem key={i}>
-                    <SidebarMenuButton className="!cursor-default">
+                    <SidebarMenuButton className="cursor-default">
                         <div className="w-full flex items-center gap-2">
                             <div className="flex-1">
                                 <Skeleton className="h-4 w-32" />

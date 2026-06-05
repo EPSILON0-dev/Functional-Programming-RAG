@@ -18,20 +18,22 @@ defmodule Api.Workers.RunPipelineJobArgs do
   defstruct [
     :message,
     :api_key,
-    :is_first_message
+    :is_first_message,
+    :config
   ]
 
   @type t :: %__MODULE__{
           message: Api.MessagePublic.t(),
           api_key: String.t(),
-          is_first_message: boolean()
+          is_first_message: boolean(),
+          config: Api.Pipeline.GenerationConfig.t() | nil
         }
 end
 
 defmodule Api.Workers.PipelineState do
   @moduledoc "Typed state threaded through all stages of RunPipelineJob."
 
-  @enforce_keys [:gen_id, :user_id, :chat_id, :history, :question, :api_key, :is_first_message]
+  @enforce_keys [:gen_id, :user_id, :chat_id, :history, :question, :api_key, :is_first_message, :config]
   defstruct [
     # Job identity
     :gen_id,
@@ -42,6 +44,8 @@ defmodule Api.Workers.PipelineState do
     :question,
     :api_key,
     :is_first_message,
+    # Configuration
+    :config,
     # Accumulated pipeline cost
     cost: 0.0,
     # Stage outputs (populated as the pipeline progresses)
@@ -60,6 +64,7 @@ defmodule Api.Workers.PipelineState do
           question: String.t(),
           api_key: String.t(),
           is_first_message: boolean(),
+          config: Api.Pipeline.GenerationConfig.t(),
           cost: float(),
           topic: map() | nil,
           uninformed_response: String.t() | nil,

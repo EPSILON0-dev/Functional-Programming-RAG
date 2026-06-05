@@ -1,12 +1,4 @@
 defmodule Api.Pipeline.ResponseRerank do
-  @llm_model "openai/gpt-4.1-mini"
-
-  @generation_options %Api.Provider.Options{
-    temperature: 0.0,
-    top_p: 1.0,
-    reasoning_enabled: false
-  }
-
   @rerank_prompt """
   You are a response quality evaluator.
   Given a question and a list of candidate responses, select the single best response.
@@ -48,13 +40,15 @@ defmodule Api.Pipeline.ResponseRerank do
     {:ok, %{response: single.content, reasoning: "Only one candidate.", cost: 0.0}}
   end
 
-  def run(question, candidates) do
-    key = System.get_env("OPENROUTER_API_KEY") || ""
+  def run(question, candidates, config) do
+    key = config.api_key
 
     options = %Api.Provider.Options{
-      @generation_options
-      | model: @llm_model,
-        format: @output_format
+      model: config.response_rerank_model,
+      temperature: config.response_rerank_temperature,
+      top_p: config.response_rerank_top_p,
+      reasoning_enabled: false,
+      format: @output_format
     }
 
     responses_text =
