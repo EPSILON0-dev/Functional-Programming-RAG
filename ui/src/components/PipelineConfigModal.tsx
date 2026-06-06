@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Settings2, Plus, Trash2, FlaskConical, Check } from "lucide-react"
+import { Settings2, Plus, Trash2, Check } from "lucide-react"
 import {
   Dialog,
   DialogClose,
@@ -28,9 +28,20 @@ interface Props {
 }
 
 const MODEL_OPTIONS = [
+  // OpenAI
   { value: "openai/gpt-5.4-nano", label: "GPT-5.4 Nano" },
   { value: "openai/gpt-5.4-mini", label: "GPT-5.4 Mini" },
   { value: "openai/gpt-5.4", label: "GPT-5.4" },
+  // Google
+  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  // Anthropic
+  { value: "anthropic/claude-sonnet-4.6", label: "Claude Sonnet 4.6" },
+  { value: "anthropic/claude-haiku-4.5", label: "Claude Haiku 4.5" },
+  // Kimi (Moonshot AI)
+  { value: "moonshotai/kimi-k2.5", label: "Kimi K2.5" },
+  // DeepSeek
+  { value: "deepseek/deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+  { value: "deepseek/deepseek-v4-pro", label: "DeepSeek V4 Pro" },
 ]
 
 type Tab = "presets" | "models" | "retrieval" | "generation" | "reranking"
@@ -138,16 +149,6 @@ function ModelSelectField({
             ))}
           </SelectContent>
         </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1 shrink-0"
-          onClick={() => toast.info("Model test endpoint not yet implemented")}
-          title="Test model"
-        >
-          <FlaskConical className="w-3.5 h-3.5" />
-          Test
-        </Button>
       </div>
     </div>
   )

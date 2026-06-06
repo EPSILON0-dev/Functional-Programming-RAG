@@ -6,11 +6,10 @@
 [x] Change the error message to display the actual error
 [x] Redo the home page
 [x] Fix the generating animation
-[ ] Add better models
-[ ] Add autoscroll and stretch
+[x] Add better models
+[x] Add autoscroll and stretch
 [x] Add message info (references, model, cost)
 [ ] Improve the Markdown renderer
-[ ] Add context length limits
 [-] Write some docs
 [ ] Containarize the app
 [ ] Create some database
