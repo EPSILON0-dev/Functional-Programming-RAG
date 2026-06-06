@@ -196,6 +196,7 @@ defmodule Api.Workers.RunPipelineJob do
   defp finalize(state, content, pipeline_meta) do
     case Api.Message.update_by_id(state.gen_id, %{
            content: content,
+           author_id: state.user_id,
            role: "assistant",
            metadata: pipeline_meta
          }) do
@@ -224,6 +225,7 @@ defmodule Api.Workers.RunPipelineJob do
     case Api.Message.update_by_id(state.gen_id, %{
            content: "An error occurred while generating the response.",
            role: "error",
+           author_id: state.user_id,
            metadata: %{"error" => inspect(reason)}
          }) do
       {:ok, message} -> broadcast_response_complete(message, state.user_id)
@@ -245,22 +247,16 @@ defmodule Api.Workers.RunPipelineJob do
       topic_extraction_model:
         config_map["topic_extraction_model"] ||
           "openai/gpt-4.1-mini",
-      topic_extraction_temperature:
-        config_map["topic_extraction_temperature"] || 0.1,
+      topic_extraction_temperature: config_map["topic_extraction_temperature"] || 0.1,
       topic_extraction_top_p: config_map["topic_extraction_top_p"] || 0.9,
       topic_extraction_kb_needed_threshold:
         config_map["topic_extraction_kb_needed_threshold"] || 0.5,
-      uninformed_response_model:
-        config_map["uninformed_response_model"] || "openai/gpt-4.1",
-      uninformed_response_temperature:
-        config_map["uninformed_response_temperature"] || 0.7,
-      uninformed_response_top_p:
-        config_map["uninformed_response_top_p"] || 0.95,
-      embedding_model:
-        System.get_env("EMBEDDING_MODEL") || "openai/text-embedding-3-small",
+      uninformed_response_model: config_map["uninformed_response_model"] || "openai/gpt-4.1",
+      uninformed_response_temperature: config_map["uninformed_response_temperature"] || 0.7,
+      uninformed_response_top_p: config_map["uninformed_response_top_p"] || 0.95,
+      embedding_model: System.get_env("EMBEDDING_MODEL") || "openai/text-embedding-3-small",
       per_search_limit: config_map["per_search_limit"] || 10,
-      rerank_double_pass_enabled:
-        config_map["rerank_double_pass_enabled"] || true,
+      rerank_double_pass_enabled: config_map["rerank_double_pass_enabled"] || true,
       rerank_top_k: config_map["rerank_top_k"] || 10,
       rerank_model: config_map["rerank_model"] || "openai/gpt-4.1-mini",
       rerank_temperature: config_map["rerank_temperature"] || 0.0,
@@ -269,14 +265,10 @@ defmodule Api.Workers.RunPipelineJob do
       generation_model: config_map["generation_model"] || "openai/gpt-4.1",
       generation_temperature: config_map["generation_temperature"] || 0.7,
       generation_top_p: config_map["generation_top_p"] || 0.95,
-      generation_reasoning_enabled:
-        config_map["generation_reasoning_enabled"] || true,
-      generation_reasoning_effort:
-        config_map["generation_reasoning_effort"] || "low",
-      response_rerank_model:
-        config_map["response_rerank_model"] || "openai/gpt-4.1-mini",
-      response_rerank_temperature:
-        config_map["response_rerank_temperature"] || 0.0,
+      generation_reasoning_enabled: config_map["generation_reasoning_enabled"] || true,
+      generation_reasoning_effort: config_map["generation_reasoning_effort"] || "low",
+      response_rerank_model: config_map["response_rerank_model"] || "openai/gpt-4.1-mini",
+      response_rerank_temperature: config_map["response_rerank_temperature"] || 0.0,
       response_rerank_top_p: config_map["response_rerank_top_p"] || 1.0
     }
 

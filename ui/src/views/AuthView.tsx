@@ -5,30 +5,30 @@ import { Label } from "@/components/ui/label";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { AppContext } from "@/AppContext";
 import { authLogin, authRegister } from "@/lib/auth";
-import { IconDatabase, IconMessages, IconSearch, IconLock, IconArrowLeft } from "@tabler/icons-react";
+import { IconMessages, IconBooks, IconBrain, IconHistory, IconArrowLeft } from "@tabler/icons-react";
 
 type Screen = "landing" | "login" | "register";
 
 const features = [
     {
-        icon: <IconDatabase size={20} />,
-        title: "Document Databases",
-        description: "Organise your study materials into named databases. Each database holds the documents that the AI will search through when answering your questions.",
-    },
-    {
-        icon: <IconSearch size={20} />,
-        title: "Retrieval-Augmented Generation",
-        description: "Every answer is grounded in your documents. The system retrieves the most relevant passages before generating a response, reducing hallucinations.",
-    },
-    {
         icon: <IconMessages size={20} />,
-        title: "Persistent Chat Histories",
-        description: "Your conversations are saved per account. Switch between topics freely — the full history is always there when you come back.",
+        title: "Intelligent Chat",
+        description: "Create persistent conversations with an AI tutor. Every response is grounded in course materials, providing accurate and well-sourced answers to your questions.",
     },
     {
-        icon: <IconLock size={20} />,
-        title: "Private Accounts",
-        description: "Each user has their own account, keeping chat histories and preferences completely separate from other users on the same instance.",
+        icon: <IconBooks size={20} />,
+        title: "Knowledge Base Search",
+        description: "Instantly search through your course materials with semantic vector search. Find relevant lecture notes, papers, and resources based on meaning, not just keywords.",
+    },
+    {
+        icon: <IconBrain size={20} />,
+        title: "6-Stage Analysis Pipeline",
+        description: "Sophisticated LLM pipeline that understands your query, retrieves relevant materials, ranks them by relevance, and generates high-quality responses with citations.",
+    },
+    {
+        icon: <IconHistory size={20} />,
+        title: "Persistent Chat History",
+        description: "All your conversations are saved in your account. Review past discussions, organize multiple study topics, and quickly find answers you've already explored.",
     },
 ];
 
@@ -105,12 +105,12 @@ export function AuthView() {
                         Your AI study assistant for Functional Programming
                     </h1>
                     <p className="mt-5 max-w-xl text-base text-muted-foreground leading-relaxed">
-                        Upload your lecture notes and papers, then ask questions in plain language.
-                        Every answer is grounded in your documents — no hallucinations, no guessing.
+                        Ask questions about Functional Programming concepts in plain language.
+                        Every answer is grounded in course materials — no hallucinations, just learning.
                     </p>
                     <div className="mt-8 flex gap-3">
                         <Button size="lg" onClick={() => goToScreen("register")}>
-                            Get started — it's free
+                            Get started
                         </Button>
                         <Button size="lg" variant="outline" onClick={() => goToScreen("login")}>
                             Sign in
@@ -137,7 +137,7 @@ export function AuthView() {
                 </section>
 
                 <footer className="border-t border-border px-8 py-4 text-center text-xs text-muted-foreground/60">
-                    PF Chatbot — local accounts, no external authentication required.
+                    PF Chatbot — Your AI study companion for Functional Programming
                 </footer>
             </div>
         );

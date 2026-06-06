@@ -103,6 +103,63 @@ defmodule ApiWeb.Controllers.ChatController do
     end
   end
 
+  def delete_message(conn, %{"chat_id" => chat_id, "message_id" => message_id}) do
+    user_id = conn.assigns[:user_id]
+
+    with {:ok, _message} <- Api.Message.delete_by_id(message_id, chat_id, user_id) do
+      ApiWeb.Endpoint.broadcast("user:#{user_id}", "message_deleted", %{
+        message_id: message_id,
+        chat_id: chat_id
+      })
+
+      conn |> put_status(:no_content) |> json(%{message: "Message deleted successfully"})
+    else
+      _ ->
+        conn |> put_status(:not_found) |> json(%{error: "Message not found or access denied"})
+    end
+  end
+
+  def retry_generation(conn, %{"chat_id" => chat_id, "config" => config_params}) do
+    user_id = conn.assigns[:user_id]
+
+    with {:ok, _chat} <- Api.Chat.get_by_id(chat_id, user_id),
+         [] <- Api.Pipeline.ProgressTracker.get_by_chat(chat_id),
+         last_message <- Api.Message.get_last_message_by_chat_id(chat_id),
+         false <- is_nil(last_message),
+         true <- last_message.role == "error" do
+      with {:ok, config} <- build_config(config_params) do
+        %Api.Workers.RunPipelineJobArgs{
+          message: Api.Message.to_public(last_message),
+          api_key: conn.assigns[:api_key],
+          is_first_message: false,
+          config: config
+        }
+        |> Api.Workers.RunPipelineJob.new()
+        |> Oban.insert()
+
+        conn
+        |> put_status(:ok)
+        |> json(Api.Message.to_public(last_message))
+      else
+        _ ->
+          conn
+          |> put_status(:internal_server_error)
+          |> json(%{error: "Failed to retry generation"})
+      end
+    else
+      {:error, _} ->
+        conn |> put_status(:not_found) |> json(%{error: "Chat not found or access denied"})
+
+      false ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "No error message to retry"})
+
+      _ ->
+        conn
+        |> put_status(:too_early)
+        |> json(%{error: "Generation already running or invalid request"})
+    end
+  end
+
   defp build_config(config_params) when is_map(config_params) do
     Api.Pipeline.GenerationConfig.validate(%Api.Pipeline.GenerationConfig{
       api_key: System.get_env("OPENROUTER_API_KEY") || "",

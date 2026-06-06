@@ -29,4 +29,13 @@ defmodule ApiWeb.Channels.UserChannel do
     push(socket, "response_complete", message)
     {:noreply, socket}
   end
+
+  def handle_info({:message_deleted, message_id, chat_id}, socket) do
+    push(socket, "message_deleted", %{
+      message_id: message_id,
+      chat_id: chat_id
+    })
+
+    {:noreply, socket}
+  end
 end

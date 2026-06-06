@@ -1,22 +1,23 @@
 import { Send } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useContext, useEffect } from "react"
 import { PipelineConfigModal } from "./PipelineConfigModal"
 import type { PipelineConfig } from "@/types/pipelineConfig"
 import { PRESET_BALANCED } from "@/types/pipelineConfig"
 import { usePipelinePresets } from "@/hooks/usePipelinePresets"
+import { AppContext } from "@/AppContext"
 
 interface Props {
   onMessageSent: ((message: string, config: PipelineConfig) => Promise<void>) | null;
 }
 
 export function ChatInput(props: Props): React.JSX.Element {
+  const ctx = useContext(AppContext);
   const { currentPreset } = usePipelinePresets()
-  const [currentConfig, setCurrentConfig] = useState<PipelineConfig>(PRESET_BALANCED.config)
 
   // Update config when global preset changes
   useEffect(() => {
     if (currentPreset) {
-      setCurrentConfig(currentPreset.config)
+      ctx?.dispatch({ type: "SET_PIPELINE_CONFIG", payload: currentPreset.config });
     }
   }, [currentPreset])
 
@@ -31,14 +32,13 @@ export function ChatInput(props: Props): React.JSX.Element {
     const input = document.getElementById("chat-input") as HTMLTextAreaElement
     const message = input.value.trim()
     if (message) {
-      props.onMessageSent && props.onMessageSent(message, currentConfig)
+      props.onMessageSent && props.onMessageSent(message, ctx?.state.pipelineConfig ?? PRESET_BALANCED.config)
       input.value = ""
     }
   }
 
   const handleConfigChange = (config: PipelineConfig) => {
-    setCurrentConfig(config)
-    console.log("Config changed:", config)
+    ctx?.dispatch({ type: "SET_PIPELINE_CONFIG", payload: config });
   }
 
   return (

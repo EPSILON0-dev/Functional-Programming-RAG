@@ -96,6 +96,27 @@ defmodule Api.Message do
     end
   end
 
+  def delete_by_id(message_id, chat_id, user_id) do
+    with {:ok, _chat} <- Api.Chat.get_by_id(chat_id, user_id),
+         message <- Api.Repo.get(__MODULE__, message_id),
+         false <- is_nil(message),
+         true <- is_nil(message.deleted_at),
+         true <- message.chat_id == chat_id do
+      message
+      |> changeset(%{deleted_at: DateTime.truncate(DateTime.utc_now(), :second)})
+      |> Api.Repo.update()
+    else
+      _ -> {:error, "Message not found or access denied"}
+    end
+  end
+
+  def get_last_message_by_chat_id(chat_id) do
+    Api.Repo.all_by(__MODULE__, chat_id: chat_id)
+    |> Enum.filter(fn message -> is_nil(message.deleted_at) end)
+    |> Enum.sort_by(& &1.inserted_at, :asc)
+    |> List.last()
+  end
+
   def to_public(%__MODULE__{} = message) do
     %Api.MessagePublic{
       id: message.id,

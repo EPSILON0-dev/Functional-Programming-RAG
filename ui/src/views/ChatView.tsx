@@ -84,6 +84,72 @@ export function ChatView(): React.JSX.Element {
     }
   }
 
+  const deleteMessage = async (messageId: string) => {
+    if (!chatId) return;
+
+    try {
+      const response = await fetch(`/api/chats/${chatId}/messages/${messageId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        toast.success("Message deleted");
+        // The message will be removed via WebSocket event, but as fallback we can also update locally
+        ctx?.dispatch({
+          type: "SET_MESSAGES",
+          payload: {
+            chatId,
+            messages: (messages || []).filter(msg => msg.id !== messageId)
+          },
+        });
+      } else {
+        toast.error("Failed to delete message");
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast.error("Failed to delete message");
+    }
+  }
+
+  const retryGeneration = async (_: string) => {
+    if (!chatId) return;
+
+    try {
+      const response = await fetch(`/api/chats/${chatId}/retry`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ config: ctx?.state.pipelineConfig }),
+      });
+
+      if (response.ok) {
+        toast.success("Retrying generation...");
+        // The error message will be removed and new response will arrive via WebSocket
+      } else if (response.status === 422) {
+        toast.error("No error message to retry");
+      } else if (response.status === 425) {
+        toast.error("Generation already running. Please wait.");
+      } else {
+        toast.error("Failed to retry generation");
+      }
+    } catch (error) {
+      console.error("Error retrying generation:", error);
+      toast.error("Failed to retry generation");
+    }
+  }
+
+  const handleAction = (isLastMessage: boolean, messageId: string) => {
+    if (isLastMessage) {
+      retryGeneration(messageId);
+    } else {
+      deleteMessage(messageId);
+    }
+  };
+
   const handleRefresh = () => {
     setChatError(false);
     window.location.reload();
@@ -147,7 +213,12 @@ export function ChatView(): React.JSX.Element {
                   ) : item.role === "generating" ? (
                     <GeneratingMessage message={item.content} />
                   ) : (
-                    <ErrorMessage message={item.content} details={item.metadata?.error} />
+                    <ErrorMessage
+                      message={item.content}
+                      details={item.metadata?.error}
+                      isLastMessage={index === (messages?.length ?? 0) - 1}
+                      onAction={() => handleAction(index === (messages?.length ?? 0) - 1, item.id)}
+                    />
                   )}
                 </div>
               ))}

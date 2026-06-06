@@ -60,7 +60,9 @@ defmodule ApiWeb.Router do
     post("/new", Controllers.ChatController, :new_chat)
     post("/:chat_id/messages", Controllers.ChatController, :send_message)
     post("/:chat_id/rename", Controllers.ChatController, :rename_chat)
+    post("/:chat_id/retry", Controllers.ChatController, :retry_generation)
     delete("/:chat_id", Controllers.ChatController, :delete_chat)
+    delete("/:chat_id/messages/:message_id", Controllers.ChatController, :delete_message)
   end
 
   if Application.compile_env(:api, :dev_routes) do

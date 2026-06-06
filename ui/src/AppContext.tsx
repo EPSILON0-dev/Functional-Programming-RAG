@@ -3,6 +3,7 @@ import type { Conversation, Message, NamedIdentifier } from "./types/types";
 import { QueryClient } from "@tanstack/react-query";
 import { authGetCurrentUser, authLogout, type AuthUser } from "./lib/auth";
 import { WebSocketManager } from "./lib/ws";
+import { PRESET_BALANCED, type PipelineConfig } from "./types/pipelineConfig";
 
 type Theme = "light" | "dark";
 
@@ -15,6 +16,7 @@ const initialState: AppState = {
   selectedDatabase: null,
   theme: storedTheme,
   currentUser: await authGetCurrentUser(),
+  pipelineConfig: PRESET_BALANCED.config,
   messages: {},
   chatRefreshCounter: 0,
 };
@@ -26,6 +28,7 @@ interface AppState {
   selectedDatabase: NamedIdentifier | null;
   theme: Theme;
   currentUser: AuthUser | null;
+  pipelineConfig: PipelineConfig;
   messages: Record<string, Message[]>;
   chatRefreshCounter: number;
 }
@@ -41,6 +44,7 @@ type Action =
   | { type: "LOGOUT" }
   | { type: "SET_MESSAGES"; payload: { chatId: string; messages: Message[] } }
   | { type: "ADD_MESSAGE"; payload: { chatId: string; message: Message, replace?: boolean } }
+  | { type: "SET_PIPELINE_CONFIG"; payload: PipelineConfig }
 
 function toggleTheme(state: AppState): AppState {
   const next: Theme = state.theme === "light" ? "dark" : "light";
@@ -70,7 +74,7 @@ function setMessages(state: AppState, chatId: string, messages: Message[]): AppS
 
 function addMessage(state: AppState, chatId: string, message: Message, replace: boolean = false): AppState {
   if (state.messages[chatId]?.some((msg) => msg.id === message.id)) {
-    if (!replace) { console.log("Message already exists and replace is false"); return state; }
+    if (!replace) { return state; }
     return {
       ...state,
       messages: {
@@ -137,6 +141,8 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "SET_MESSAGES": return setMessages(state, action.payload.chatId, action.payload.messages);
     case "ADD_MESSAGE": return addMessage(state, action.payload.chatId, action.payload.message, action.payload.replace);
+
+    case "SET_PIPELINE_CONFIG": return { ...state, pipelineConfig: action.payload };
     default: return state;
   }
 }
