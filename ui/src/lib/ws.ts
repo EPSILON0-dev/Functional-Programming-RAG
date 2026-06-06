@@ -88,6 +88,7 @@ export class WebSocketManager {
           role: message.payload.role,
           content: message.payload.content || "",
           timestamp: message.payload.timestamp,
+          metadata: message.payload.metadata || {},
         },
         replace: replace,
       }

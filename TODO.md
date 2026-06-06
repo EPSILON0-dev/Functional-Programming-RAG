@@ -8,7 +8,7 @@
 [x] Fix the generating animation
 [ ] Add better models
 [ ] Add autoscroll and stretch
-[ ] Add message info (references, model, cost)
+[x] Add message info (references, model, cost)
 [ ] Improve the Markdown renderer
 [ ] Add context length limits
 [-] Write some docs

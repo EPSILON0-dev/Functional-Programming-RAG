@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import type { Message } from "@/types/types";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   message: string;
@@ -48,6 +49,7 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.JSX.
   const [isHovered, setIsHovered] = React.useState(false);
   const [showInfo, setShowInfo] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const navigate = useNavigate();
 
   const handleCopy = async () => {
     try {
@@ -81,9 +83,8 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.JSX.
 
         {/* Action buttons - appear on hover */}
         <div
-          className={`absolute -bottom-8 left-0 flex gap-1 transition-opacity duration-150 ${
-            isHovered ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute -bottom-8 left-0 flex gap-1 transition-opacity duration-150 ${isHovered ? "opacity-100" : "opacity-0"
+            }`}
         >
           <Button
             size="icon-sm"
@@ -109,7 +110,7 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.JSX.
 
       {/* Info Modal */}
       <Dialog open={showInfo} onOpenChange={setShowInfo}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Message Info</DialogTitle>
             <DialogDescription>
@@ -150,14 +151,12 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.JSX.
                   {articles.map((article, index) => (
                     <li
                       key={article.id}
-                      className="text-sm text-muted-foreground bg-muted rounded-md px-3 py-2"
+                      className="text-sm text-muted-foreground bg-muted rounded-md px-3 py-2 hover:bg-muted/80 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/explore/${article.id}`)}
                     >
                       <span className="font-medium text-foreground">
                         {index + 1}. {article.title}
                       </span>
-                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                        ID: {article.id}
-                      </div>
                     </li>
                   ))}
                 </ul>

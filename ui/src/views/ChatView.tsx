@@ -7,7 +7,7 @@ import {
 } from "../components/Messages"
 import { ChatInput } from "../components/ChatInput"
 import { AppContext } from "@/AppContext";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import type { Message } from "@/types/types";
 import { IconAlertTriangleFilled } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,39 @@ export function ChatView(): React.JSX.Element {
   const navigate = useNavigate();
   const { chatId } = useParams<{ chatId: string }>();
   const [chatError, setChatError] = useState<boolean>(false);
+  const mainRef = useRef<HTMLElement>(null);
+  const isAtBottomRef = useRef(true);
+  const messages = chatId ? ctx?.state.messages[chatId] : undefined;
+
+  const checkIsAtBottom = () => {
+    const main = mainRef.current;
+    if (!main) return true;
+    const threshold = 50; // pixels from bottom to consider "at bottom"
+    return main.scrollHeight - main.scrollTop - main.clientHeight < threshold;
+  };
+
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const main = mainRef.current;
+    if (main) {
+      main.scrollTo({ top: main.scrollHeight, behavior });
+    }
+  };
+
+  const handleScroll = () => {
+    const atBottom = checkIsAtBottom();
+    isAtBottomRef.current = atBottom;
+  };
+
+  useEffect(() => {
+    scrollToBottom("auto");
+    isAtBottomRef.current = true;
+  }, [chatId]);
+
+  useEffect(() => {
+    if (isAtBottomRef.current && messages && messages.length > 0) {
+      scrollToBottom("smooth");
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (!chatId) return;
@@ -47,8 +80,6 @@ export function ChatView(): React.JSX.Element {
 
     fetchMessages();
   }, [chatId]);
-
-  const messages = chatId ? ctx?.state.messages[chatId] : undefined;
 
   const onMessageSent = async (message: string, config: any) => {
     if (!chatId) return;
@@ -170,7 +201,7 @@ export function ChatView(): React.JSX.Element {
         </div>
       </header>
 
-      <main className="flex-1 min-w-0 overflow-y-auto">
+      <main ref={mainRef} onScroll={handleScroll} className="flex-1 min-w-0 overflow-y-auto relative">
         <div className="max-w-4xl min-w-0 mx-auto h-full px-4">
           <div className="h-8" />
           {chatError ? (
