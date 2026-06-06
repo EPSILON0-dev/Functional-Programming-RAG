@@ -64,6 +64,21 @@ export function usePipelinePresets() {
     }
   };
 
+  const updateCustomPreset = (name: string, config: PipelineConfig) => {
+    const customPresets = presets.filter((p) => p.isCustom);
+    const updated = customPresets.map((p) =>
+      p.name === name ? { ...p, config } : p
+    );
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      setPresets([...DEFAULT_PRESETS, ...updated]);
+    } catch (e) {
+      console.error("Failed to update preset:", e);
+      throw e;
+    }
+  };
+
   const deleteCustomPreset = (name: string) => {
     const customPresets = presets.filter((p) => p.isCustom && p.name !== name);
 
@@ -81,6 +96,7 @@ export function usePipelinePresets() {
     currentPreset,
     setCurrentPreset,
     saveCustomPreset,
+    updateCustomPreset,
     deleteCustomPreset,
   };
 }

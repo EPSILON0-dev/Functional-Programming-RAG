@@ -39,3 +39,239 @@
 .assistant-message {
   animation: fadeIn 0.2s ease-in;
 }
+
+/* ============================================================================
+   Markdown Content Styling
+   ============================================================================ */
+
+.assistant-message {
+  line-height: 1.6;
+}
+
+/* Headings */
+.assistant-message h1,
+.assistant-message h2,
+.assistant-message h3,
+.assistant-message h4,
+.assistant-message h5,
+.assistant-message h6 {
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  line-height: 1.25;
+  color: currentColor;
+}
+
+.assistant-message h1 {
+  font-size: 1.75em;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.3em;
+}
+
+.assistant-message h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.3em;
+}
+
+.assistant-message h3 {
+  font-size: 1.25em;
+}
+
+.assistant-message h4 {
+  font-size: 1.1em;
+}
+
+.assistant-message h5 {
+  font-size: 1em;
+}
+
+.assistant-message h6 {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+/* First heading has no top margin */
+.assistant-message h1:first-child,
+.assistant-message h2:first-child,
+.assistant-message h3:first-child,
+.assistant-message h4:first-child,
+.assistant-message h5:first-child,
+.assistant-message h6:first-child {
+  margin-top: 0;
+}
+
+/* Paragraphs */
+.assistant-message p {
+  margin-top: 0;
+  margin-bottom: 0.75em;
+}
+
+.assistant-message p:last-child {
+  margin-bottom: 0;
+}
+
+/* Links */
+.assistant-message a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.assistant-message a:hover {
+  border-bottom-color: hsl(var(--primary));
+}
+
+/* Strong and Emphasis */
+.assistant-message strong {
+  font-weight: 600;
+}
+
+.assistant-message em {
+  font-style: italic;
+}
+
+/* Inline Code */
+.assistant-message code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  background-color: hsl(var(--muted) / 0.5);
+  color: currentColor;
+}
+
+/* Code Blocks */
+.assistant-message pre {
+  background-color: hsl(var(--muted) / 0.5);
+  border-radius: 0.5rem;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.assistant-message pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.875em;
+  line-height: 1.5;
+}
+
+/* Lists */
+.assistant-message ul,
+.assistant-message ol {
+  margin-top: 0;
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+
+.assistant-message ul {
+  list-style-type: disc;
+}
+
+.assistant-message ol {
+  list-style-type: decimal;
+}
+
+.assistant-message li {
+  margin-bottom: 0.25em;
+}
+
+.assistant-message li>ul,
+.assistant-message li>ol {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Task Lists (GFM) */
+.assistant-message input[type="checkbox"] {
+  margin-right: 0.5em;
+  vertical-align: middle;
+  cursor: default;
+}
+
+.assistant-message li:has(> input[type="checkbox"]) {
+  list-style-type: none;
+  margin-left: -1.5em;
+}
+
+/* Blockquotes */
+.assistant-message blockquote {
+  margin: 0.75em 0;
+  padding: 0 1em;
+  border-left: 3px solid hsl(var(--primary) / 0.5);
+  opacity: 0.9;
+}
+
+.assistant-message blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Horizontal Rule */
+.assistant-message hr {
+  border: none;
+  border-top: 1px solid currentColor;
+  opacity: 0.2;
+  margin: 1.5em 0;
+}
+
+/* Tables (GFM) */
+.assistant-message table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.95em;
+}
+
+.assistant-message th,
+.assistant-message td {
+  padding: 0.5em 0.75em;
+  border: 1px solid currentColor;
+  text-align: left;
+}
+
+.assistant-message th {
+  font-weight: 600;
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+.assistant-message tr:nth-child(even) {
+  background-color: hsl(var(--muted) / 0.15);
+}
+
+/* Images */
+.assistant-message img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 0.5em 0;
+}
+
+/* Strikethrough (GFM) */
+.assistant-message del {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+/* Subscript and Superscript */
+.assistant-message sub,
+.assistant-message sup {
+  font-size: 0.75em;
+  line-height: 0;
+}
+
+/* Definition Lists (if supported) */
+.assistant-message dl {
+  margin: 0.75em 0;
+}
+
+.assistant-message dt {
+  font-weight: 600;
+  margin-top: 0.5em;
+}
+
+.assistant-message dd {
+  margin-left: 1.5em;
+  margin-bottom: 0.5em;
+}

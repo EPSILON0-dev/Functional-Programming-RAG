@@ -63,6 +63,7 @@ function SliderField({
   step,
   precision,
   onChange,
+  disabled = false,
 }: {
   label: string
   hint?: string
@@ -72,12 +73,13 @@ function SliderField({
   step: number
   precision: number
   onChange: (v: number) => void
+  disabled?: boolean
 }) {
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${disabled ? "opacity-50" : ""}`}>
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-0.5 flex-1">
-          <Label className="text-sm font-medium">{label}</Label>
+          <Label className={`text-sm font-medium ${disabled ? "text-muted-foreground" : ""}`}>{label}</Label>
           {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
         <span className="text-sm font-medium tabular-nums shrink-0 w-12 text-right">
@@ -86,11 +88,12 @@ function SliderField({
       </div>
       <Slider
         value={value}
-        onValueChange={(v) => onChange(typeof v === "number" ? v : v[0])}
+        onValueChange={(v) => !disabled && onChange(typeof v === "number" ? v : v[0])}
         min={min}
         max={max}
         step={step}
         className="w-full"
+        disabled={disabled}
       />
     </div>
   )
@@ -101,22 +104,25 @@ function ToggleField({
   description,
   checked,
   onChange,
+  disabled = false,
 }: {
   label: string
   description?: string
   checked: boolean
   onChange: (v: boolean) => void
+  disabled?: boolean
 }) {
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className={`flex items-start justify-between gap-4 ${disabled ? "opacity-50" : ""}`}>
       <div className="space-y-0.5">
-        <Label className="text-sm font-medium">{label}</Label>
+        <Label className={`text-sm font-medium ${disabled ? "text-muted-foreground" : ""}`}>{label}</Label>
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
       </div>
       <Checkbox
         checked={checked}
-        onCheckedChange={(v) => onChange(v as boolean)}
+        onCheckedChange={(v) => !disabled && onChange(v as boolean)}
         className="mt-0.5"
+        disabled={disabled}
       />
     </div>
   )
@@ -127,17 +133,19 @@ function ModelSelectField({
   value,
   options,
   onChange,
+  disabled = false,
 }: {
   label: string
   value: string
   options: { value: string; label: string }[]
   onChange: (v: string) => void
+  disabled?: boolean
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <Label className="text-sm font-medium shrink-0">{label}</Label>
+    <div className={`flex items-center justify-between gap-4 ${disabled ? "opacity-50" : ""}`}>
+      <Label className={`text-sm font-medium shrink-0 ${disabled ? "text-muted-foreground" : ""}`}>{label}</Label>
       <div className="flex items-center gap-2">
-        <Select value={value} onValueChange={(v, _) => { onChange(v || "") }}>
+        <Select value={value} onValueChange={(v, _) => { !disabled && onChange(v || "") }} disabled={disabled}>
           <SelectTrigger className="w-52">
             <SelectValue />
           </SelectTrigger>
@@ -155,7 +163,7 @@ function ModelSelectField({
 }
 
 export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Element {
-  const { presets, currentPreset, setCurrentPreset, saveCustomPreset, deleteCustomPreset } =
+  const { presets, currentPreset, setCurrentPreset, saveCustomPreset, updateCustomPreset, deleteCustomPreset } =
     usePipelinePresets()
 
   const [tab, setTab] = useState<Tab>("presets")
@@ -167,9 +175,16 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
   const [newPresetName, setNewPresetName] = useState("")
   const [savingPreset, setSavingPreset] = useState(false)
 
+  // Check if current preset is a built-in (read-only) or custom (editable)
+  const isReadOnly = currentPreset ? !currentPreset.isCustom : false
+
   const update = <K extends keyof PipelineConfig>(key: K, value: PipelineConfig[K]) => {
     const next = { ...config, [key]: value }
     setConfig(next)
+    // Auto-save when editing a custom preset
+    if (currentPreset?.isCustom) {
+      updateCustomPreset(currentPreset.name, next)
+    }
     onConfigChange?.(next)
   }
 
@@ -238,18 +253,24 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
 
         {/* Tab bar */}
         <div className="flex gap-1 px-5 border-b pb-0">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${tab === t.id
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          {TABS.map((t) => {
+            const disabled = isReadOnly && t.id !== "presets"
+            return (
+              <button
+                key={t.id}
+                onClick={() => !disabled && setTab(t.id)}
+                disabled={disabled}
+                className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${disabled
+                  ? "border-transparent text-muted-foreground/30 cursor-not-allowed"
+                  : tab === t.id
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                {t.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* Tab content */}
@@ -277,6 +298,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                 ))}
               </div>
 
+              {/* Custom Presets Section */}
               {presets.filter((p) => p.isCustom).length > 0 && (
                 <div className="space-y-2">
                   <SectionLabel>Custom</SectionLabel>
@@ -336,7 +358,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                     onClick={() => setSavingPreset(true)}
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Save current settings as preset
+                    New
                   </Button>
                 )}
               </div>
@@ -353,12 +375,14 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                   value={config.generation_model}
                   options={MODEL_OPTIONS}
                   onChange={(v) => update("generation_model", v)}
+                  disabled={isReadOnly}
                 />
                 <ModelSelectField
                   label="Uninformed response"
                   value={config.uninformed_response_model}
                   options={MODEL_OPTIONS}
                   onChange={(v) => update("uninformed_response_model", v)}
+                  disabled={isReadOnly}
                 />
               </div>
               <div className="space-y-3">
@@ -368,18 +392,21 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                   value={config.topic_extraction_model}
                   options={MODEL_OPTIONS}
                   onChange={(v) => update("topic_extraction_model", v)}
+                  disabled={isReadOnly}
                 />
                 <ModelSelectField
                   label="Doc reranking"
                   value={config.rerank_model}
                   options={MODEL_OPTIONS}
                   onChange={(v) => update("rerank_model", v)}
+                  disabled={isReadOnly}
                 />
                 <ModelSelectField
                   label="Response reranking"
                   value={config.response_rerank_model}
                   options={MODEL_OPTIONS}
                   onChange={(v) => update("response_rerank_model", v)}
+                  disabled={isReadOnly}
                 />
               </div>
             </div>
@@ -396,6 +423,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                   value={config.topic_extraction_kb_needed_threshold}
                   min={0} max={1} step={0.05} precision={2}
                   onChange={(v) => update("topic_extraction_kb_needed_threshold", v)}
+                  disabled={isReadOnly}
                 />
               </div>
               <div className="space-y-4">
@@ -406,6 +434,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                   value={config.per_search_limit}
                   min={1} max={50} step={1} precision={0}
                   onChange={(v) => update("per_search_limit", v)}
+                  disabled={isReadOnly}
                 />
               </div>
               {showExpert && (
@@ -416,12 +445,14 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                     value={config.topic_extraction_temperature}
                     min={0} max={2} step={0.05} precision={2}
                     onChange={(v) => update("topic_extraction_temperature", v)}
+                    disabled={isReadOnly}
                   />
                   <SliderField
                     label="Top-P"
                     value={config.topic_extraction_top_p}
                     min={0} max={1} step={0.05} precision={2}
                     onChange={(v) => update("topic_extraction_top_p", v)}
+                    disabled={isReadOnly}
                   />
                 </div>
               )}
@@ -439,6 +470,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                   value={config.parallel_generations}
                   min={1} max={5} step={1} precision={0}
                   onChange={(v) => update("parallel_generations", v)}
+                  disabled={isReadOnly}
                 />
               </div>
               {showExpert && (
@@ -450,24 +482,28 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                       value={config.generation_temperature}
                       min={0} max={2} step={0.05} precision={2}
                       onChange={(v) => update("generation_temperature", v)}
+                      disabled={isReadOnly}
                     />
                     <SliderField
                       label="Generation Top-P"
                       value={config.generation_top_p}
                       min={0} max={1} step={0.05} precision={2}
                       onChange={(v) => update("generation_top_p", v)}
+                      disabled={isReadOnly}
                     />
                     <SliderField
                       label="Uninformed Response Temperature"
                       value={config.uninformed_response_temperature}
                       min={0} max={2} step={0.05} precision={2}
                       onChange={(v) => update("uninformed_response_temperature", v)}
+                      disabled={isReadOnly}
                     />
                     <SliderField
                       label="Uninformed Response Top-P"
                       value={config.uninformed_response_top_p}
                       min={0} max={1} step={0.05} precision={2}
                       onChange={(v) => update("uninformed_response_top_p", v)}
+                      disabled={isReadOnly}
                     />
                   </div>
                   <div className="space-y-4 border-t pt-4">
@@ -477,15 +513,17 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                       description="Extended chain-of-thought before generating the response."
                       checked={config.generation_reasoning_enabled}
                       onChange={(v) => update("generation_reasoning_enabled", v)}
+                      disabled={isReadOnly}
                     />
                     {config.generation_reasoning_enabled && (
-                      <div className="flex items-center justify-between gap-4">
-                        <Label className="text-sm font-medium">Reasoning Effort</Label>
+                      <div className={`flex items-center justify-between gap-4 ${isReadOnly ? "opacity-50" : ""}`}>
+                        <Label className={`text-sm font-medium ${isReadOnly ? "text-muted-foreground" : ""}`}>Reasoning Effort</Label>
                         <Select
                           value={config.generation_reasoning_effort}
                           onValueChange={(v) =>
-                            update("generation_reasoning_effort", v as "low" | "medium" | "high")
+                            !isReadOnly && update("generation_reasoning_effort", v as "low" | "medium" | "high")
                           }
+                          disabled={isReadOnly}
                         >
                           <SelectTrigger className="w-32">
                             <SelectValue />
@@ -514,6 +552,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                   description="Score documents forward and reverse, then average scores. Reduces positional bias."
                   checked={config.rerank_double_pass_enabled}
                   onChange={(v) => update("rerank_double_pass_enabled", v)}
+                  disabled={isReadOnly}
                 />
                 <SliderField
                   label="Top-K Documents"
@@ -521,6 +560,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                   value={config.rerank_top_k}
                   min={1} max={30} step={1} precision={0}
                   onChange={(v) => update("rerank_top_k", v)}
+                  disabled={isReadOnly}
                 />
               </div>
               {showExpert && (
@@ -549,6 +589,7 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
                     value={config.response_rerank_top_p}
                     min={0} max={1} step={0.05} precision={2}
                     onChange={(v) => update("response_rerank_top_p", v)}
+                    disabled={isReadOnly}
                   />
                 </div>
               )}
@@ -558,10 +599,11 @@ export function PipelineConfigModal({ onConfigChange }: Props): React.JSX.Elemen
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 border-t bg-muted/30">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
+          <label className={`flex items-center gap-2 select-none ${isReadOnly ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
             <Checkbox
               checked={showExpert}
-              onCheckedChange={(v) => setShowExpert(v as boolean)}
+              onCheckedChange={(v) => !isReadOnly && setShowExpert(v as boolean)}
+              disabled={isReadOnly}
             />
             <span className="text-xs text-muted-foreground">Expert mode</span>
           </label>
