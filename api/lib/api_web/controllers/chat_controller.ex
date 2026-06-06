@@ -43,7 +43,13 @@ defmodule ApiWeb.Controllers.ChatController do
       |> put_status(:ok)
       |> json(%{chat: Api.Chat.to_public(chat), message: Api.Message.to_public(message)})
     else
-      _ -> conn |> put_status(:internal_server_error) |> json(%{error: "Failed to create chat"})
+      {:error, reason} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: "Failed to create chat", reason: reason})
+
+      _ ->
+        conn |> put_status(:internal_server_error) |> json(%{error: "Failed to create chat"})
     end
   end
 
@@ -95,6 +101,11 @@ defmodule ApiWeb.Controllers.ChatController do
         |> put_status(:ok)
         |> json(Api.Message.to_public(message))
       else
+        {:error, reason} ->
+          conn
+          |> put_status(:internal_server_error)
+          |> json(%{error: "Failed to send message", reason: reason})
+
         _ ->
           conn |> put_status(:internal_server_error) |> json(%{error: "Failed to send message"})
       end
@@ -162,7 +173,6 @@ defmodule ApiWeb.Controllers.ChatController do
 
   defp build_config(config_params) when is_map(config_params) do
     Api.Pipeline.GenerationConfig.validate(%Api.Pipeline.GenerationConfig{
-      api_key: System.get_env("OPENROUTER_API_KEY") || "",
       topic_extraction_model: config_params["topic_extraction_model"],
       topic_extraction_temperature: config_params["topic_extraction_temperature"],
       topic_extraction_top_p: config_params["topic_extraction_top_p"],
@@ -170,7 +180,6 @@ defmodule ApiWeb.Controllers.ChatController do
       uninformed_response_model: config_params["uninformed_response_model"],
       uninformed_response_temperature: config_params["uninformed_response_temperature"],
       uninformed_response_top_p: config_params["uninformed_response_top_p"],
-      embedding_model: System.get_env("EMBEDDING_MODEL") || "openai/text-embedding-3-small",
       per_search_limit: config_params["per_search_limit"],
       rerank_double_pass_enabled: config_params["rerank_double_pass_enabled"],
       rerank_top_k: config_params["rerank_top_k"],

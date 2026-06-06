@@ -1,6 +1,19 @@
+export interface ArticleReference
+{
+    id: string;
+    title: string;
+}
+
 export interface MessageMetadata
 {
     error?: string;
+    total_cost?: number;
+    kb_used?: boolean;
+    kb_reason?: string;
+    articles_retrieved?: number;
+    articles_used?: number;
+    stages_completed?: number;
+    articles?: ArticleReference[];
 }
 
 export interface Message 

@@ -6,15 +6,18 @@ import { ErrorBoundary } from "@/components/ErrorBoundary"
 import type { Article, ArticlesListResponse } from '@/types/types';
 import { SearchInput } from "@/components/SearchInput";
 import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
 
 const PAGE_SIZE = 20;
 const WINDOW = 2; // pages shown on each side of current page
 
 export function DatabaseView(): React.JSX.Element {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { articleId } = useParams<{ articleId?: string }>();
   const [filter, setFilter] = React.useState("")
   const [currentPage, setCurrentPage] = React.useState(1)
-  const [selectedArticleId, setSelectedArticleId] = React.useState<string | null>(null)
+  const selectedArticleId = articleId || null;
 
   const offset = (currentPage - 1) * PAGE_SIZE;
   const isSearching = filter.trim() !== "";
@@ -58,6 +61,14 @@ export function DatabaseView(): React.JSX.Element {
     },
   });
 
+  const handleArticleClick = (id: string) => {
+    navigate(`/explore/${id}`);
+  };
+
+  const handleBackClick = () => {
+    navigate("/explore");
+  };
+
   const onMessageSent = async (message: string) => {
     setFilter(message)
     setCurrentPage(1)
@@ -81,7 +92,7 @@ export function DatabaseView(): React.JSX.Element {
         <header className="shrink-0">
           <div className="shrink-0 px-4 py-2 border-b">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setSelectedArticleId(null)}>
+              <Button variant="ghost" size="sm" onClick={handleBackClick}>
                 <IconArrowLeft className="mr-1" />
                 Back
               </Button>
@@ -153,7 +164,7 @@ export function DatabaseView(): React.JSX.Element {
                   <Card
                     key={item.id}
                     className="m-0 p-4 cursor-pointer hover:shadow-md transition-shadow flex flex-col gap-2"
-                    onClick={() => setSelectedArticleId(item.id)}
+                    onClick={() => handleArticleClick(item.id)}
                   >
                     <CardTitle className="text-base leading-snug">{item.title}</CardTitle>
                     <CardDescription className="line-clamp-3">{item.description}</CardDescription>

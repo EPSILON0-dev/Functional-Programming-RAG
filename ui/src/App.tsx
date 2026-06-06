@@ -3,7 +3,7 @@ import { ChatView } from "./views/ChatView"
 import { DatabaseView } from "./views/DatabaseView"
 import { NewChatView } from "./views/NewChatView";
 import { AuthView } from "./views/AuthView";
-import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Outlet, RouterProvider, Navigate } from "react-router-dom";
 import { AppProvider, queryClient, AppContext } from "./AppContext";
 import { NavSidebar } from "./views/NavSidebar";
 import { SidebarProvider } from "./components/ui/sidebar";
@@ -38,12 +38,16 @@ const router = createBrowserRouter([
         element: <ErrorBoundary><ChatView /></ErrorBoundary>
       },
       {
-        path: "/database/:databaseId",
+        path: "/explore",
         element: <ErrorBoundary><DatabaseView /></ErrorBoundary>
       },
       {
-        path: "/explore",
+        path: "/explore/:articleId",
         element: <ErrorBoundary><DatabaseView /></ErrorBoundary>
+      },
+      {
+        path: "/database/:databaseId",
+        element: <Navigate to="/explore" replace />
       },
     ]
   },

@@ -209,7 +209,7 @@ export function ChatView(): React.JSX.Element {
                   {item.role === "user" ? (
                     <UserMessage message={item.content} />
                   ) : item.role === "assistant" ? (
-                    <AssistantMessage message={item.content} />
+                    <AssistantMessage message={item} />
                   ) : item.role === "generating" ? (
                     <GeneratingMessage message={item.content} />
                   ) : (

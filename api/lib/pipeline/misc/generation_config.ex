@@ -77,11 +77,9 @@ defmodule Api.Pipeline.GenerationConfig do
   end
 
   def validate(config) do
-    with true <- is_binary(config.api_key) and config.api_key != "",
-         true <- is_binary(config.topic_extraction_model) and config.topic_extraction_model != "",
+    with true <- is_binary(config.topic_extraction_model) and config.topic_extraction_model != "",
          true <-
            is_binary(config.uninformed_response_model) and config.uninformed_response_model != "",
-         true <- is_binary(config.embedding_model) and config.embedding_model != "",
          true <- is_binary(config.rerank_model) and config.rerank_model != "",
          true <- is_binary(config.generation_model) and config.generation_model != "",
          true <- is_binary(config.response_rerank_model) and config.response_rerank_model != "" do

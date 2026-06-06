@@ -3,11 +3,23 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "@/components/Messages.css"
 
-import { IconAlertTriangle, IconTrash, IconRefresh } from "@tabler/icons-react";
+import { IconAlertTriangle, IconTrash, IconRefresh, IconInfoCircle, IconCopy, IconCheck } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import type { Message } from "@/types/types";
 
 interface Props {
   message: string;
+}
+
+interface AssistantMessageProps {
+  message: Message;
 }
 
 export function UserMessage({ message }: Props): React.JSX.Element {
@@ -32,16 +44,136 @@ export function GeneratingMessage({ message }: Props): React.JSX.Element {
   )
 }
 
-export function AssistantMessage({ message }: Props): React.JSX.Element {
+export function AssistantMessage({ message }: AssistantMessageProps): React.JSX.Element {
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [showInfo, setShowInfo] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
+    }
+  };
+
+  const metadata = message.metadata;
+  const articles = metadata?.articles || [];
+  const cost = metadata?.total_cost;
+  const kbUsed = metadata?.kb_used;
+  const articlesRetrieved = metadata?.articles_retrieved;
+  const articlesUsed = metadata?.articles_used;
+
   return (
-    <div>
-      <div className="assistant-message">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {message}
-        </ReactMarkdown>
+    <>
+      <div
+        className="group relative mb-4"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="assistant-message">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {message.content}
+          </ReactMarkdown>
+        </div>
+
+        {/* Action buttons - appear on hover */}
+        <div
+          className={`absolute -bottom-8 left-0 flex gap-1 transition-opacity duration-150 ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => setShowInfo(true)}
+            className="h-7 w-7"
+            title="Message info"
+          >
+            <IconInfoCircle size={16} />
+          </Button>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={handleCopy}
+            className="h-7 w-7"
+            title={copied ? "Copied!" : "Copy message"}
+          >
+            {copied ? <IconCheck size={16} className="text-green-500" /> : <IconCopy size={16} />}
+          </Button>
+        </div>
       </div>
-      <div className="h-16" />
-    </div>
+      <div className="h-12" />
+
+      {/* Info Modal */}
+      <Dialog open={showInfo} onOpenChange={setShowInfo}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Message Info</DialogTitle>
+            <DialogDescription>
+              Details about how this response was generated
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {/* Cost Section */}
+            {cost !== undefined && (
+              <div>
+                <h4 className="text-sm font-medium mb-1">Cost</h4>
+                <p className="text-sm text-muted-foreground">
+                  ${cost.toFixed(6)}
+                </p>
+              </div>
+            )}
+
+            {/* KB Usage Section */}
+            {kbUsed !== undefined && (
+              <div>
+                <h4 className="text-sm font-medium mb-1">Knowledge Base</h4>
+                <p className="text-sm text-muted-foreground">
+                  {kbUsed
+                    ? `Used (${articlesRetrieved || 0} retrieved, ${articlesUsed || 0} used)`
+                    : "Not used"}
+                </p>
+              </div>
+            )}
+
+            {/* Articles Section */}
+            {articles.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">
+                  Referenced Articles ({articles.length})
+                </h4>
+                <ul className="space-y-2">
+                  {articles.map((article, index) => (
+                    <li
+                      key={article.id}
+                      className="text-sm text-muted-foreground bg-muted rounded-md px-3 py-2"
+                    >
+                      <span className="font-medium text-foreground">
+                        {index + 1}. {article.title}
+                      </span>
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        ID: {article.id}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {articles.length === 0 && kbUsed && (
+              <div>
+                <h4 className="text-sm font-medium mb-1">Referenced Articles</h4>
+                <p className="text-sm text-muted-foreground">No articles referenced</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

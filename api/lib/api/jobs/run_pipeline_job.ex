@@ -194,11 +194,27 @@ defmodule Api.Workers.RunPipelineJob do
   # ---------------------------------------------------------------------------
 
   defp finalize(state, content, pipeline_meta) do
+    # Build article info from top_articles if available
+    article_info =
+      if state.top_articles && state.top_articles != [] do
+        Enum.map(state.top_articles, fn article ->
+          %{
+            id: article.id,
+            title: article.title
+          }
+        end)
+      else
+        []
+      end
+
+    # Merge article info into metadata
+    full_metadata = Map.put(pipeline_meta, :articles, article_info)
+
     case Api.Message.update_by_id(state.gen_id, %{
            content: content,
            author_id: state.user_id,
            role: "assistant",
-           metadata: pipeline_meta
+           metadata: full_metadata
          }) do
       {:ok, message} ->
         Api.Pipeline.ProgressTracker.complete_job(state.gen_id)
