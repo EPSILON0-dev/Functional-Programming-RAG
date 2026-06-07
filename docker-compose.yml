@@ -2,7 +2,7 @@ services:
   db:
     image: ankane/pgvector:v0.5.1
     environment:
-      POSTGRES_USER: ${DB_USER:-pf_rag_user}
+      POSTGRES_USER: ${DB_USERNAME:-pf_rag_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-pf_rag_password}
       POSTGRES_DB: ${DB_NAME:-pf_rag_db}
     volumes:
@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pf_rag_user}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-pf_rag_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -18,13 +18,21 @@ services:
   api:
     build: ./api
     environment:
-      DATABASE_URL: ecto://${DB_USER:-pf_rag_user}:${DB_PASSWORD:-pf_rag_password}@db/${DB_NAME:-pf_rag_db}
-      PORT: 4000
+      MIX_ENV: ${MIX_ENV:-prod}
+      DB_USERNAME: ${DB_USERNAME:-pf_rag_user}
+      DB_PASSWORD: ${DB_PASSWORD:-pf_rag_password}
+      DB_HOST: ${DB_PASSWORD:-db}
+      DB_NAME: ${DB_NAME:-pf_rag_db}
+      DATABASE_URL: ecto://${DB_USERNAME:-pf_rag_user}:${DB_PASSWORD:-pf_rag_password}@${DB_HOST:-db}/${DB_NAME:-pf_rag_db}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      PORT: ${PORT:-4000}
       PHX_HOST: ${PHX_HOST:-localhost}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?SECRET_KEY_BASE is required}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev_encryption_key_32_chars_long}
+      JOKEN_SIGNER: ${JOKEN_SIGNER:-super_secret_key_for_dev_only_change_in_prod}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is required}
     ports:
-      - "4000:4000"
+      - "${PORT:-4000}:${PORT:-4000}"
     depends_on:
       db:
         condition: service_healthy

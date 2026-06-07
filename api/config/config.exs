@@ -47,9 +47,6 @@ config :api, Oban,
   ]
 
 # Configuration for the RAG pipeline
-config :api, Api.Pipeline,
-  # Set to true to print each stage's LLM output to stdout
-  debug: true
 
 # Configuration for the document loader
 config :api, Api.Loader,
