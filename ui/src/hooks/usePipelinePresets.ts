@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { PipelineConfig, PresetDefinition } from "@/types/pipelineConfig";
-import { DEFAULT_PRESETS } from "@/types/pipelineConfig";
+import { DEFAULT_PRESETS, PRESET_BALANCED } from "@/types/pipelineConfig";
 
 const STORAGE_KEY = "pipelineConfigPresets";
 const LAST_PRESET_KEY = "lastUsedPreset";
@@ -26,13 +26,14 @@ export function usePipelinePresets() {
       }
     }
 
-    // Load last used preset
     const lastPresetName = localStorage.getItem(LAST_PRESET_KEY);
     if (lastPresetName) {
       const lastPreset = allPresets.find((p) => p.name === lastPresetName);
       if (lastPreset) {
         setCurrentPresetState(lastPreset);
       }
+    } else {
+      setCurrentPresetState(PRESET_BALANCED);
     }
   }, []);
 
