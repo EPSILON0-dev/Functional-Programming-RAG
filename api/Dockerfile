@@ -19,7 +19,7 @@ RUN mix deps.get --only prod && mix compile && mix release
 FROM debian:bookworm-slim
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
-    libstdc++6 openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+    libstdc++6 openssl ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r app && useradd -r -g app app
 
