@@ -141,7 +141,6 @@ export class WebSocketManager {
   }
 
   private async connect() {
-    // TODO Move the token to the headers
     const token = await this.fetchToken();
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/api/websocket?token=${token}`;

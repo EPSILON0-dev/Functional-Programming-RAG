@@ -11,7 +11,6 @@ export function NewChatView(): React.JSX.Element {
     const navigate = useNavigate();
     const ctx = useContext(AppContext);
 
-    // TODO add chat
     const startNewChat = async (message: string, config?: any): Promise<void> => {
         const response = await fetch("/api/chats/new", {
             method: "POST",

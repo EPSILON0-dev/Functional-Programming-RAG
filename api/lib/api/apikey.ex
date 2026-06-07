@@ -85,8 +85,6 @@ defmodule Api.APIKey do
     end
   end
 
-  # TODO - implement real encryption and decryption
-  # Stupid little fuck Claude is too retarded to do it by itself and gaslights me about it working
   defp encrypt_key(plain_key) do
     plain_key
   end

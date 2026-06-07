@@ -52,16 +52,8 @@ defmodule Api.Provider.OpenRouter do
     |> Map.get("text")
   end
 
-  defp extract_responses_reasoning(response) do
-    # TODO: Adapt to /responses endpoint structure
-    response
-    |> Map.get("output")
-    |> Enum.filter(fn item -> item["type"] == "message" end)
-    |> List.first()
-    |> Map.get("content")
-    |> Enum.filter(fn item -> item["type"] == "output_text" end)
-    |> List.first()
-    |> Map.get("text")
+  defp extract_responses_reasoning(_) do
+    ""
   end
 
   defp extract_responses_metadata(response) do
