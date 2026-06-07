@@ -1,54 +1,90 @@
-# Chatbot przedmiotu „Programowanie Funkcyjne"
+# Chatbot przedmiotu programowanie funkcyjne
 
-Asystent wspomagający naukę przedmiotu _Programowanie Funkcyjne_. Odpowiada na pytania dotyczące materiału wykładowego, ćwiczeń i zadań, opierając się na dostarczonych dokumentach kursu.
-
----
+Asystent wspomagający naukę przedmiotu _Programowanie Funkcyjne_, oparty na **Retrieval-Augmented Generation (RAG)**, czyli podejściu łączącym wyszukiwanie w bazie wiedzy z generowaniem tekstu przez modele językowe.
 
 ## Funkcjonalności
 
-- Rozmowa z modelem językowym w interfejsie czatu
-- Trwała pamięć konwersacji dzięki automatycznemu kompaktowaniu historii
-- Wybór modelu językowego dla poszczególnych etapów przetwarzania (wyszukiwanie, generacja)
-- Przeglądanie historii poprzednich rozmów
-- Prosty system kont użytkowników z oddzielną historią dla każdego z nich
-- Obsługa wielu niezależnych baz dokumentów
-- Estymacja kosztów wykorzystania modeli językowych
+### **Czat i Konwersacje**
+- Tworzenie wielu niezależnych konwersacji z automatycznym zapisem historii
+- Wysyłanie wiadomości i otrzymywanie odpowiedzi AI w czasie rzeczywistym
+- Zmiana nazwy i usuwanie rozmów
+- Pełna historia czatów z metadanymi (koszty generacji, znaczniki czasowe)
 
----
+### **Integracja z Bazą Wiedzy**
+- Przeglądanie kompletnej bazy wiedzy materiałów kursu Programowania Funkcyjnego
+- Automatyczne wyszukiwanie istotnych artykułów na podstawie podobieństwa wektorów
+- Wyświetlanie szczegółów artykułów i ich wykorzystania w odpowiedziach
 
-## Architektura
+### **Konta Użytkowników i Konfiguracja**
+- Rejestracja użytkowników i autentykacja z tokenami JWT
+- Zarządzanie kluczami API dostawców modeli (OpenRouter)
+- Ustawienia konta: zmiana nazwy użytkownika, hasła
+- Konfiguracja modelu i parametrów dla poszczególnych konwersacji
 
-Projekt oparty jest na podejściu **RAG** (_Retrieval Augmented Generation_), które łączy przeszukiwenie bazy danych z generowaniem tekstu przez model językowy.
+### **Aktualizacje w Czasie Rzeczywistym**
+- Komunikacja WebSocket z transmisją wiadomości na żywo
+- Monitorowanie etapów pipeline'u w czasie rzeczywistym
+- Widok stanu "generowanie" podczas przetwarzania zapytania
 
-### Indeksowanie dokumentów
+## Potok Retrieval-Augmented Generation
 
-1. Dokumenty są konwertowane do formatu tekstowego (Markdown); opcjonalnie obrazy zastępowane są opisem tekstowym.
-2. Tekst dzielony jest na fragmenty odpowiadające pojedynczym akapitom.
-3. Fragmenty niekompletne, błędne lub nieistotne są odfiltrowywane.
-4. Dla każdego fragmentu generowane są tytuł i streszczenie.
-5. Fragment wraz z metadanymi i wektorem osadzeń zapisywany jest w bazie danych.
+## Przepływ Pracy Wysyłania Wiadomości
 
-### Wyszukiwanie
+1. **Użytkownik** pisze wiadomość w ChatView i klika wysłanie
+2. **Frontend waliduje** wiadomość, autentykację, ID czatu
+3. **HTTP POST** do `/api/chats/{chatId}/messages`
+4. **Backend**:
+   - Waliduje JWT token
+   - Tworzy rekord Message (rola: "user")
+   - Umieszcza `RunPipelineJob` w kolejce (Oban)
+   - Zwraca `202 Accepted` natychmiast
+5. **Async Job** — Worker wykonuje 6-etapowy pipeline:
+   - Transmituje postęp via WebSocket
+   - Tworzy rekord Message (rola: "assistant")
+   - Transmituje nową wiadomość via WebSocket
+6. **Frontend WebSocket** — Nasłuchuje aktualizacji:
+   - Aktualizuje stan AppContext
+   - ChatView re-renderuje z nowymi wiadomościami
 
-1. Model ocenia, czy odpowiedź na zapytanie wymaga sięgnięcia do bazy dokumentów.
-2. Zapytanie jest przepisywane tak, by było niezależne od kontekstu poprzednich wiadomości.
-3. Generowane są embeddingi oraz słowa kluczowe użyte do przeszukania bazy.
-4. Wyniki są oceniane pod kątem trafności, a najlepsze fragmenty wybierane jako kontekst.
+## Stos Technologiczny
 
-### Generowanie odpowiedzi
+### **Frontend**
+ * React - Biblioteka UI 
+ * TypeScript - Język użyty we frontendzie
+ * Vite - Build tool i dev server 
+ * React Router - Routing po stronie klienta 
+ * TailwindCSS - Stylizowanie
+ * Sonner - Powiadomienia
 
-1. Uruchamiane jest wyszukiwanie opisane powyżej.
-2. Model generuje odpowiedź na podstawie zapytania i pobranych fragmentów.
-3. Gdy historia konwersacji przekroczy dopuszczalny rozmiar, jest automatycznie kompaktowana.
+### **Backend**
+ * Phoenix - Framework webowy
+ * Elixir - Runtime
+ * Ecto - Komunikacja z bazą danych
+ * Oban - Kolejkowanie i obsługa długich zadań
+ * Joken - Tokeny JWT
+ * pgvector - Wektorowa baza danych
 
----
+## Uruchomienie Aplikacji
 
-## Stos technologiczny
+### Środowisko Produkcyjne
 
-| Warstwa | Technologia | Rola |
-|---|---|---|
-| Frontend | **React** + **TypeScript** | Interfejs użytkownika (okno czatu) |
-| Logika aplikacji | **TypeScript**/**PureScript** | Funkcyjna logika biznesowa i integracja z API |
-| Baza danych | **PostgreSQL** + **pgvector** | Przechowywanie dokumentów i wektorów osadzeń |
-| Przygotowanie dokumentów | **PyMuPDF** + **pandoc** | Konwertowanie dokumentów do markdown'a |
-| Modele językowe | **OpenRouter** / **Ollama** | Generowanie odpowiedzi i tworzenie osadzeń |
+```bash
+docker compose -f docker-compose.yml build
+docker compose -f docker-compose.yml up -d
+# Aplikacja dostępa na localhost:80
+```
+
+### Środowisko deweloperskie
+
+```bash
+./start.sh
+```
+
+Skrypt uruchamia:
+1. **PostgreSQL** w Docker'ze na sql://localhost:5432
+2. **Backend Phoenix** na http://localhost:4000
+3. **Frontend Vite** na http://localhost:5173
+
+### **Zmienne Środowiskowe**
+
+* `OPENROUTER_API_KEY` - Klucz używany podczas przygotowywania i osadzania artukułów
