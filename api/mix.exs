@@ -53,6 +53,7 @@ defmodule Api.MixProject do
       {:joken, "~> 2.6.2"},
       {:oban, "~> 2.17"},
       {:pgvector, "~> 0.3"},
+      {:req, "~> 0.5.0"},
       {:igniter, "~> 0.6", only: [:dev, :test]}
     ]
   end
