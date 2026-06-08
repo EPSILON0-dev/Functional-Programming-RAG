@@ -29,7 +29,7 @@ services:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?SECRET_KEY_BASE is required}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev_encryption_key_32_chars_long}
       JOKEN_SIGNER: ${JOKEN_SIGNER:-super_secret_key_for_dev_only_change_in_prod}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is required}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       PGPASSWORD: ${DB_PASSWORD:-pf_rag_password}
     volumes:
       - ./db/import:/import:ro
