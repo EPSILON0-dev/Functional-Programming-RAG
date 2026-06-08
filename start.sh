@@ -39,7 +39,7 @@ start_api()
 start_db()
 {
     print_log "Starting DB..."
-    docker compose -f db/docker-compose.yml up -d
+    docker compose -f db/docker-compose-dev.yml up -d
     while ! nc -z localhost 5432; do
         sleep 0.1
     done

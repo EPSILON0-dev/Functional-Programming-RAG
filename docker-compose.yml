@@ -5,10 +5,8 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-pf_rag_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-pf_rag_password}
       POSTGRES_DB: ${DB_NAME:-pf_rag_db}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-pf_rag_user} -d ${DB_NAME:-pf_rag_db}"]
       interval: 10s
@@ -22,6 +20,7 @@ services:
       DB_USERNAME: ${DB_USERNAME:-pf_rag_user}
       DB_PASSWORD: ${DB_PASSWORD:-pf_rag_password}
       DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-pf_rag_db}
       DATABASE_URL: ecto://${DB_USERNAME:-pf_rag_user}:${DB_PASSWORD:-pf_rag_password}@${DB_HOST:-db}/${DB_NAME:-pf_rag_db}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
@@ -31,8 +30,12 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev_encryption_key_32_chars_long}
       JOKEN_SIGNER: ${JOKEN_SIGNER:-super_secret_key_for_dev_only_change_in_prod}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is required}
-    ports:
-      - "${PORT:-4000}:${PORT:-4000}"
+      PGPASSWORD: ${DB_PASSWORD:-pf_rag_password}
+    volumes:
+      - ./db/import:/import:ro
+    networks:
+      - internal
+      - frontend
     depends_on:
       db:
         condition: service_healthy
@@ -46,6 +49,8 @@ services:
     build: ./ui
     ports:
       - "80:80"
+    networks:
+      - frontend
     depends_on:
       - api
     healthcheck:
@@ -54,9 +59,8 @@ services:
       timeout: 5s
       retries: 5
 
-volumes:
-  postgres_data:
-
 networks:
-  pf-rag-network:
+  internal:
+    internal: true
+  frontend:
     driver: bridge
