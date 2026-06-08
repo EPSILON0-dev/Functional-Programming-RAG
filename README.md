@@ -28,6 +28,34 @@ Asystent wspomagający naukę przedmiotu _Programowanie Funkcyjne_, oparty na **
 
 ## Potok Retrieval-Augmented Generation
 
+1. **Wyodrębnianie tematu** (`1_topic_extraction.ex`)
+ * Określa, czy wymagane jest przeszukanie bazy wiedzy
+ * Normalizuje zapytanie tak, aby było niezależne od kontekstu
+ * Zwraca: `{needs_kb, topic}`
+
+2. **Odpowiedź bez wykorzystania bazy wiedzy** (`2_uninformed_response.ex`)
+ * Generuje bazową odpowiedź bez dostępu do bazy wiedzy
+ * Służy do porównania z odpowiedzią wygenerowaną z wykorzystaniem bazy
+
+3. **Wyszukiwanie informacji** (`3_retrieval_stage.ex`)
+ * Generuje osadzenia (embeddingi) dla zapytania
+ * Przeprowadza wyszukiwanie wektorowe podobnych artykułów
+ * Wykorzystuje embeddingi zarówno treści, jak i opisów
+
+4. **Ponowne rangowanie wyników** (`4_rerank_stage.ex`)
+ * Ponownie ocenia trafność odnalezionych artykułów
+ * Przyznaje wynikom oceny i ustala ich kolejność
+ * Obsługuje dwustopniowe rangowanie
+
+5. **Generowanie odpowiedzi** (`5_generation.ex`)
+ * Tworzy końcową odpowiedź na podstawie najwyżej ocenionych artykułów
+ * Obsługuje generowanie równoległe (wiele kandydatów na odpowiedź)
+ * Umożliwia konfigurację modelu, temperatury oraz opcji rozumowania
+
+6. **Ponowne rangowanie odpowiedzi** (`6_response_rerank.ex`)
+ * Weryfikuje i wybiera najlepszą odpowiedź spośród kandydatów
+ * Przeprowadza końcową kontrolę jakości przed zwróceniem odpowiedzi
+
 ## Przepływ Pracy Wysyłania Wiadomości
 
 1. **Użytkownik** pisze wiadomość w ChatView i klika wysłanie
@@ -88,3 +116,30 @@ Skrypt uruchamia:
 ### **Zmienne Środowiskowe**
 
 * `OPENROUTER_API_KEY` - Klucz używany podczas przygotowywania i osadzania artukułów
+
+## Dodawanie Dokumentów do Bazy Wiedzy
+
+Aplikacja umożliwia rozszerzanie bazy wiedzy o nowe dokumenty za pomocą Mix taska `rag.load`.
+
+### Wymagania
+
+* Ustawiona zmienna środowiskowa `OPENROUTER_API_KEY`
+* Zainstalowane narzędzie `pdftotext` (z pakietu `poppler-utils`) dla plików PDF
+
+### Użycie
+
+```bash
+cd api
+mix rag.load path/to/document.pdf
+```
+
+Task obsługuje pliki PDF oraz pliki tekstowe (`.txt`). Dokument zostanie podzielony na fragmenty, które następnie są przetwarzane przez pipeline:
+
+1. **Normalizacja i ocena trafności** - tekst jest czyszczony i oceniany pod kątem przydatności
+2. **Generowanie tytułu i opisu** - tworzone są metadane dla każdego fragmentu
+3. **Generowanie embeddingów** - tworzone są wektory dla wyszukiwania semantycznego
+4. **Zapis do bazy danych** - artykuły są zapisywane w tabeli `articles`
+
+### Konfiguracja (opcjonalna)
+
+W `api/config/config.exs` można dostosować parametry przetwarzania.

@@ -1,5 +1,6 @@
 source.sh
 AGENTS.md
+db/tmp/
 
 # Environment files
 .env

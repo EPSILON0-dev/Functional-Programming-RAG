@@ -14,6 +14,8 @@ defmodule Api.Application do
       {Phoenix.PubSub, name: Api.PubSub},
       Api.Pipeline.ProgressTracker,
       {Oban, Application.fetch_env!(:api, Oban)},
+      # Finch HTTP connection pool with increased capacity for parallel LLM requests
+      {Finch, name: Api.Finch, pools: %{default: [size: 256]}},
       # Start a worker by calling: Api.Worker.start_link(arg)
       # {Api.Worker, arg},
       # Start to serve requests, typically the last entry

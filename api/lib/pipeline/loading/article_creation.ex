@@ -1,19 +1,34 @@
 defmodule Api.Pipeline.CreateArticle do
   @normalization_prompt """
-  You are a helpful assistant for normalizing and chunking documents to be stored in a knowledge base.
-  Your task is to take the provided text and perform the following operations:
-   * Normalize the text by removing any irrelevant information,
-      correcting formatting issues, and ensuring consistency in style.
-   * Make sure the normalized text is written in ENGLISH, regardless of the input language.
-   * Assess the relevance of the text to the knowledge base, providing a
-      relevance score between 0 and 1, where 0 means completely irrelevant
-      and 1 means highly relevant. Also provide a brief explanation for the
-      assigned relevance score.
-  Notes:
-   * Documents containing useful information for the knowledge base should be prioritized.
-   * Documents containing introductions, table of contents, summaries, conclusions, or sections
-     that provide a high-level overview of the document-specific content should be considered
-     completely irrelevant.
+    You are preparing text chunks for a retrieval-augmented generation (RAG) knowledge base.
+
+    Normalization rules:
+    * Always write the output in English.
+    * Preserve all factual and technical information.
+    * Remove formatting artifacts, page numbers, headers, footers, OCR errors, and duplicated text.
+    * Remove references to document structure such as:
+      - introductions,
+      - prefaces,
+      - forewords,
+      - tables of contents,
+      - chapter summaries,
+      - conclusions,
+      - acknowledgements,
+      - copyright notices,
+      - indexes,
+      - navigation instructions.
+    * Do not add information that is not present in the input.
+    * Do not begin with phrases like "This text", "The document", or similar.
+    * Convert lists and fragmented sentences into coherent prose when appropriate.
+
+    Relevance scoring:
+    * 1.0: Dense factual or technical knowledge useful for future question answering.
+    * 0.8: Mostly useful content with minor contextual material.
+    * 0.5: Mixed content with substantial non-knowledge material.
+    * 0.2: Mostly metadata, commentary, or document-specific navigation.
+    * 0.0: Pure introduction, table of contents, summary, conclusion, legal notice, or other non-retrievable material.
+
+    The relevance score should reflect the usefulness of storing this chunk in a knowledge base, not the quality of the writing.
   """
 
   @normalization_output_format %{
@@ -47,15 +62,25 @@ defmodule Api.Pipeline.CreateArticle do
   }
 
   @title_description_prompt """
-  You are a helpful assistant for generating titles and descriptions for documents to be stored in a knowledge base.
-  Your task is to take the provided text and perform the following operations:
-   * Generate a concise and informative title for the text.
-   * Generate a brief description that summarizes the main points of the text.
-  Notes:
-   * The title should be clear and relevant to the content of the text.
-   * The description should provide a quick overview of the text's content.
-   * The title should be at most 10 words long, and the description should be at most 50 words or 2 sentences long.
-   * Make sure the title and the description are written in ENGLISH, regardless of the input language.
+    You are generating metadata for a document that will be stored in a retrieval-augmented generation (RAG) knowledge base.
+
+    Requirements:
+     * Output ONLY valid JSON. Do not include markdown or explanations.
+     * The title must:
+      - be in English,
+      - contain at most 10 words,
+      - describe the main subject of the document,
+      - avoid generic prefixes like "Introduction to" or "Overview of" unless essential.
+     * The description must:
+      - be in English,
+      - contain at most 50 words,
+      - summarize the key topics and purpose of the document,
+      - include important domain-specific terms that may improve retrieval,
+      - avoid filler and subjective language.
+     * Do not mention that this is a book, article, chapter, or document unless the text itself is about those things.
+     * Preserve technical terminology from the source when appropriate.
+     * If the input is not in English, translate concepts but keep proper nouns unchanged.
+     * Do not invent information that is not supported by the input text.
   """
 
   @title_description_output_format %{

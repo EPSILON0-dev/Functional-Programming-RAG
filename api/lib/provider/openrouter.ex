@@ -141,7 +141,7 @@ defmodule Api.Provider.OpenRouter do
     # IO.inspect(headers, label: "OpenRouter Headers")
     # IO.inspect(params, label: "OpenRouter Query Params")
 
-    with {:ok, resp} <- Req.post(url: url, headers: headers, json: params) do
+    with {:ok, resp} <- Req.post(url: url, headers: headers, json: params, finch: Api.Finch) do
       case resp.status do
         200 ->
           # IO.inspect(resp.body, label: "OpenRouter Response Body")
@@ -180,7 +180,7 @@ defmodule Api.Provider.OpenRouter do
     # IO.inspect(headers, label: "OpenRouter Headers")
     # IO.inspect(params, label: "OpenRouter Query Params")
 
-    with {:ok, resp} <- Req.post(url: url, headers: headers, json: params) do
+    with {:ok, resp} <- Req.post(url: url, headers: headers, json: params, finch: Api.Finch) do
       case resp.status do
         200 ->
           # IO.inspect(resp.body, label: "OpenRouter Response Body")
@@ -230,7 +230,7 @@ defmodule Api.Provider.OpenRouter do
       |> Enum.filter(fn {_k, v} -> not is_nil(v) end)
       |> Enum.into(%{})
 
-    with {:ok, resp} <- Req.post(url: url, headers: headers, json: params) do
+    with {:ok, resp} <- Req.post(url: url, headers: headers, json: params, finch: Api.Finch) do
       case resp.status do
         200 ->
           {:ok, extract_embedding_response(resp.body)}

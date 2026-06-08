@@ -63,23 +63,49 @@ defmodule Api.Loader do
         chunks
         |> Task.async_stream(&Api.Pipeline.CreateArticle.create_article/1,
           max_concurrency: concurrency,
-          timeout: timeout * 1000
+          timeout: timeout * 1000,
+          on_timeout: :kill_task
         )
-        |> Stream.map(fn
-          {:ok, {:ok, article}} ->
-            case Api.Article.save(article) do
-              {:ok, saved} -> log_article_creation({:ok, {:ok, saved}})
-              {:error, reason} -> log_article_creation({:error, reason})
-            end
+        |> Stream.map(fn result ->
+          try do
+            case result do
+              {:ok, {:ok, article}} ->
+                case Api.Article.save(article) do
+                  {:ok, saved} -> log_article_creation({:ok, {:ok, saved}})
+                  {:error, reason} -> log_article_creation({:error, reason})
+                end
 
-          other ->
-            log_article_creation(other)
+              {:ok, {:dropped, reason}} ->
+                log_article_creation({:ok, {:dropped, reason}})
+                nil
+
+              {:ok, {:error, reason}} ->
+                log_article_creation({:error, reason})
+                nil
+
+              {:exit, :timeout} ->
+                IO.puts("Task timed out after #{timeout}s - skipping chunk")
+                nil
+
+              {:exit, reason} ->
+                IO.inspect(reason, label: "Task failed (error)")
+                nil
+
+              {:error, reason} ->
+                log_article_creation({:error, reason})
+                nil
+
+              other ->
+                IO.inspect(other, label: "Unexpected result")
+                nil
+            end
+          rescue
+            e ->
+              IO.inspect(e, label: "Exception during processing")
+              nil
+          end
         end)
-        |> Stream.filter(fn
-          {:ok, _article} -> true
-          _ -> false
-        end)
-        |> Enum.map(fn {_result, article} -> article end)
+        |> Stream.filter(&(&1 != nil))
         |> Enum.to_list()
 
       {:ok, articles}
