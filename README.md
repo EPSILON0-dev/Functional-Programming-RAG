@@ -92,6 +92,167 @@ Asystent wspomagający naukę przedmiotu _Programowanie Funkcyjne_, oparty na **
  * Joken - Tokeny JWT
  * pgvector - Wektorowa baza danych
 
+## Wymagania Wstępne
+
+Przed rozpoczęciem pracy upewnij się, że masz zainstalowane:
+
+- **Elixir** ~> 1.15 (wraz z Erlang/OTP)
+- **Node.js** (dla frontendu)
+- **Docker** i Docker Compose (dla bazy danych PostgreSQL)
+- **pdftotext** z pakietu `poppler-utils` (wymagane do importowania dokumentów PDF)
+
+## Struktura Projektu
+
+```
+pf-rag/
+├── api/           # Backend (Elixir/Phoenix)
+├── ui/            # Frontend (React/TypeScript/Vite)
+├── db/            # Konfiguracja Docker dla PostgreSQL z pgvector
+└── docker-compose.yml  # Konfiguracja produkcyjna
+```
+
+## Inicjalna Konfiguracja
+
+Przed pierwszym uruchomieniem:
+
+```bash
+# 1. Skopiuj plik ze zmiennymi środowiskowymi
+cp .env.example .env
+
+# 2. Zainstaluj zależności backendu
+cd api && mix deps.get
+
+# 3. Utwórz i skonfiguruj bazę danych
+mix ecto.setup
+
+# 4. Zainstaluj zależności frontendu
+cd ../ui && npm install
+```
+
+## Komendy Deweloperskie
+
+### Backend (`api/`)
+
+```bash
+cd api
+
+# Serwer deweloperski (http://localhost:4000)
+mix phx.server
+
+# Zarządzanie bazą danych
+mix ecto.migrate     # Uruchom migracje
+mix ecto.reset       # Usuń i utwórz od nowa
+```
+
+### Frontend (`ui/`)
+
+```bash
+cd ui
+
+# Serwer deweloperski (http://localhost:5173)
+npm run dev
+```
+
+### Baza Danych
+
+```bash
+# Uruchomienie samej bazy danych
+docker compose -f db/docker-compose-dev.yml up -d
+
+# Zatrzymanie bazy danych
+docker compose -f db/docker-compose-dev.yml down
+```
+
+## Endpointy API
+
+### Autentykacja
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| POST | `/api/auth` | Logowanie |
+| POST | `/api/auth/register` | Rejestracja |
+| POST | `/api/auth/logout` | Wylogowanie |
+| GET | `/api/auth/me` | Dane aktualnego użytkownika |
+| PATCH | `/api/auth/me/username` | Zmiana nazwy użytkownika |
+| PATCH | `/api/auth/me/password` | Zmiana hasła |
+| DELETE | `/api/auth/me` | Usunięcie konta |
+| GET | `/api/auth/wstoken` | Token dla WebSocket |
+
+### Klucze API
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| GET | `/api/auth/keys` | Lista kluczy API |
+| POST | `/api/auth/keys` | Dodanie klucza API |
+| POST | `/api/auth/keys/selected` | Wybór aktywnego klucza |
+| DELETE | `/api/auth/keys/:key_id` | Usunięcie klucza API |
+
+### Czaty
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| GET | `/api/chats` | Lista czatów użytkownika |
+| GET | `/api/chats/:chat_id` | Szczegóły czatu |
+| GET | `/api/chats/:chat_id/messages` | Wiadomości w czacie |
+| POST | `/api/chats/new` | Nowy czat z pierwszą wiadomością |
+| POST | `/api/chats/:chat_id/messages` | Wyślij wiadomość |
+| POST | `/api/chats/:chat_id/rename` | Zmień nazwę czatu |
+| POST | `/api/chats/:chat_id/retry` | Ponów generowanie odpowiedzi |
+| DELETE | `/api/chats/:chat_id` | Usuń czat |
+| DELETE | `/api/chats/:chat_id/messages/:message_id` | Usuń wiadomość |
+
+### Artykuły (Baza Wiedzy)
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| GET | `/api/articles` | Lista artykułów |
+| GET | `/api/articles/:article_id` | Szczegóły artykułu |
+
+### Inne
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| GET | `/api/health` | Health check |
+
+## Zmienne Środowiskowe
+
+Projekt używa pliku `.env` do konfiguracji. Skopiuj `.env.example` do `.env` i ustaw:
+
+| Zmienna | Wymagana | Opis |
+|---------|----------|------|
+| `OPENROUTER_API_KEY` | Tak* | Klucz API do OpenRouter (używany przy importowaniu dokumentów) |
+| `SECRET_KEY_BASE` | W produkcji | Klucz szyfrowania sesji (generuj: `mix phx.gen.secret`) |
+
+\* Dla użytkowników końcowych klucz API jest przechowywany w bazie danych, ale do importowania dokumentów do bazy wiedzy wymagana jest zmienna środowiskowa.
+
+Alternatywnie możesz ustawić zmienną w bieżącej sesji:
+```bash
+export OPENROUTER_API_KEY=twój_klucz
+```
+
+## Testy
+
+### Backend
+
+```bash
+cd api
+mix test
+```
+
+Frontend nie posiada obecnie skonfigurowanego zestawu testów.
+
+## Struktura Bazy Danych
+
+Aplikacja używa PostgreSQL z rozszerzeniem `pgvector` do przechowywania embeddingów wektorowych.
+
+### Tabele
+
+| Tabela | Opis |
+|--------|------|
+| `users` | Użytkownicy (id, username, password hash, selected_key_id, deleted_at) |
+| `chats` | Sesje czatów (id, name, author_id, deleted_at) |
+| `messages` | Wiadomości czatów (id, content, role, metadata, chat_id, author_id, deleted_at) |
+| `apikeys` | Zaszyfrowane klucze API LLM (id, name, encrypted_key, owner_id) |
+| `articles` | Artykuły bazy wiedzy z embeddingami (id, title, description, content, description_embedding, content_embedding, generation_cost, embedding_model) |
+| `oban_jobs` | Kolejka zadań w tle (zarządzana przez Oban) |
+
+**Uwaga:** Wszystkie dane użytkownika używają "miękkiego usuwania" (pole `deleted_at`) zamiast fizycznego usuwania rekordów.
+
 ## Uruchomienie Aplikacji
 
 ### Środowisko Produkcyjne
@@ -112,10 +273,6 @@ Skrypt uruchamia:
 1. **PostgreSQL** w Docker'ze na sql://localhost:5432
 2. **Backend Phoenix** na http://localhost:4000
 3. **Frontend Vite** na http://localhost:5173
-
-### **Zmienne Środowiskowe**
-
-* `OPENROUTER_API_KEY` - Klucz używany podczas przygotowywania i osadzania artukułów
 
 ## Dodawanie Dokumentów do Bazy Wiedzy
 
