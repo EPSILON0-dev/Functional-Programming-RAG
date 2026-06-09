@@ -26,6 +26,31 @@ Asystent wspomagający naukę przedmiotu _Programowanie Funkcyjne_, oparty na **
 - Monitorowanie etapów pipeline'u w czasie rzeczywistym
 - Widok stanu "generowanie" podczas przetwarzania zapytania
 
+## Szybki start
+
+#### 1. Zbudowanie i uruchomienie aplikacji
+
+Wykonaj poniższe komendy, aby zbudować obrazy Docker i uruchomić całą aplikację:
+
+```bash
+docker compose -f docker-compose.yml build
+docker compose -f docker-compose.yml up -d
+```
+
+Aplikacja będzie dostępna na **http://localhost:80**
+
+#### 2. Konfiguracja konta i API
+
+Następnie, w aplikacji webowej:
+
+1. **Utwórz konto** — Załóż nowy rachunek użytkownika
+2. **Zaloguj się** — Zaloguj się na nowo utworzone konto
+3. **Przejdź do ustawień klucza API** — Kliknij ikonkę konta w lewym dolnym rogu a następnie wybierz "API Keys"
+4. **Dodaj klucz API** — Dodaj swój klucz API dla dostawcy modeli (OpenRouter)
+5. **Aktywuj klucz** — Wybierz dodany klucz API jako aktywny
+
+Gotowe! Możesz teraz zacząć korzystać z chatbota.
+
 ## Potok Retrieval-Augmented Generation
 
 1. **Wyodrębnianie tematu** (`1_topic_extraction.ex`)
