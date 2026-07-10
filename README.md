@@ -1,5 +1,7 @@
 # Functional Programming Course Chatbot
 
+> 🎓 Created for the "Functional Programming" university course.
+
 An assistant supporting learning of the _Functional Programming_ course, based on **Retrieval-Augmented Generation (RAG)** — an approach combining knowledge base search with text generation by language models.
 
 ## Features
