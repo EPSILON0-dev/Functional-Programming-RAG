@@ -1,172 +1,172 @@
-# Chatbot przedmiotu programowanie funkcyjne
+# Functional Programming Course Chatbot
 
-Asystent wspomagający naukę przedmiotu _Programowanie Funkcyjne_, oparty na **Retrieval-Augmented Generation (RAG)**, czyli podejściu łączącym wyszukiwanie w bazie wiedzy z generowaniem tekstu przez modele językowe.
+An assistant supporting learning of the _Functional Programming_ course, based on **Retrieval-Augmented Generation (RAG)** — an approach combining knowledge base search with text generation by language models.
 
-## Funkcjonalności
+## Features
 
-### **Czat i Konwersacje**
-- Tworzenie wielu niezależnych konwersacji z automatycznym zapisem historii
-- Wysyłanie wiadomości i otrzymywanie odpowiedzi AI w czasie rzeczywistym
-- Zmiana nazwy i usuwanie rozmów
-- Pełna historia czatów z metadanymi (koszty generacji, znaczniki czasowe)
+### **Chat and Conversations**
+- Creating multiple independent conversations with automatic history saving
+- Sending messages and receiving AI responses in real-time
+- Renaming and deleting conversations
+- Full chat history with metadata (generation costs, timestamps)
 
-### **Integracja z Bazą Wiedzy**
-- Przeglądanie kompletnej bazy wiedzy materiałów kursu Programowania Funkcyjnego
-- Automatyczne wyszukiwanie istotnych artykułów na podstawie podobieństwa wektorów
-- Wyświetlanie szczegółów artykułów i ich wykorzystania w odpowiedziach
+### **Knowledge Base Integration**
+- Browsing the complete knowledge base of Functional Programming course materials
+- Automatic search for relevant articles based on vector similarity
+- Displaying article details and their usage in responses
 
-### **Konta Użytkowników i Konfiguracja**
-- Rejestracja użytkowników i autentykacja z tokenami JWT
-- Zarządzanie kluczami API dostawców modeli (OpenRouter)
-- Ustawienia konta: zmiana nazwy użytkownika, hasła
-- Konfiguracja modelu i parametrów dla poszczególnych konwersacji
+### **User Accounts and Configuration**
+- User registration and authentication with JWT tokens
+- API key management for model providers (OpenRouter)
+- Account settings: changing username, password
+- Model and parameter configuration for individual conversations
 
-### **Aktualizacje w Czasie Rzeczywistym**
-- Komunikacja WebSocket z transmisją wiadomości na żywo
-- Monitorowanie etapów pipeline'u w czasie rzeczywistym
-- Widok stanu "generowanie" podczas przetwarzania zapytania
+### **Real-time Updates**
+- WebSocket communication with live message streaming
+- Real-time pipeline stage monitoring
+- "Generating" status view during query processing
 
-## Szybki start
+## Quick Start
 
-#### 1. Zbudowanie i uruchomienie aplikacji
+#### 1. Building and Running the Application
 
-Wykonaj poniższe komendy, aby zbudować obrazy Docker i uruchomić całą aplikację:
+Execute the following commands to build Docker images and run the entire application:
 
 ```bash
 docker compose -f docker-compose.yml build
 docker compose -f docker-compose.yml up -d
 ```
 
-Aplikacja będzie dostępna na **http://localhost:80**
+The application will be available at **http://localhost:80**
 
-#### 2. Konfiguracja konta i API
+#### 2. Account and API Configuration
 
-Następnie, w aplikacji webowej:
+Next, in the web application:
 
-1. **Utwórz konto** — Załóż nowy rachunek użytkownika
-2. **Zaloguj się** — Zaloguj się na nowo utworzone konto
-3. **Przejdź do ustawień klucza API** — Kliknij ikonkę konta w lewym dolnym rogu a następnie wybierz "API Keys"
-4. **Dodaj klucz API** — Dodaj swój klucz API dla dostawcy modeli (OpenRouter)
-5. **Aktywuj klucz** — Wybierz dodany klucz API jako aktywny
+1. **Create an account** — Register a new user account
+2. **Log in** — Sign in to your newly created account
+3. **Go to API Key settings** — Click the account icon in the bottom left corner and select "API Keys"
+4. **Add API Key** — Add your API key for the model provider (OpenRouter)
+5. **Activate the key** — Select the added API key as active
 
-Gotowe! Możesz teraz zacząć korzystać z chatbota.
+Done! You can now start using the chatbot.
 
-## Potok Retrieval-Augmented Generation
+## Retrieval-Augmented Generation Pipeline
 
-1. **Wyodrębnianie tematu** (`1_topic_extraction.ex`)
- * Określa, czy wymagane jest przeszukanie bazy wiedzy
- * Normalizuje zapytanie tak, aby było niezależne od kontekstu
- * Zwraca: `{needs_kb, topic}`
+1. **Topic Extraction** (`1_topic_extraction.ex`)
+   * Determines if knowledge base search is required
+   * Normalizes the query to be context-independent
+   * Returns: `{needs_kb, topic}`
 
-2. **Odpowiedź bez wykorzystania bazy wiedzy** (`2_uninformed_response.ex`)
- * Generuje bazową odpowiedź bez dostępu do bazy wiedzy
- * Służy do porównania z odpowiedzią wygenerowaną z wykorzystaniem bazy
+2. **Uninformed Response** (`2_uninformed_response.ex`)
+   * Generates a base response without access to the knowledge base
+   * Used for comparison with the knowledge base-enhanced response
 
-3. **Wyszukiwanie informacji** (`3_retrieval_stage.ex`)
- * Generuje osadzenia (embeddingi) dla zapytania
- * Przeprowadza wyszukiwanie wektorowe podobnych artykułów
- * Wykorzystuje embeddingi zarówno treści, jak i opisów
+3. **Information Retrieval** (`3_retrieval_stage.ex`)
+   * Generates embeddings for the query
+   * Performs vector search for similar articles
+   * Uses embeddings of both content and descriptions
 
-4. **Ponowne rangowanie wyników** (`4_rerank_stage.ex`)
- * Ponownie ocenia trafność odnalezionych artykułów
- * Przyznaje wynikom oceny i ustala ich kolejność
- * Obsługuje dwustopniowe rangowanie
+4. **Result Reranking** (`4_rerank_stage.ex`)
+   * Re-evaluates the relevance of found articles
+   * Assigns scores and establishes ranking order
+   * Supports two-stage reranking
 
-5. **Generowanie odpowiedzi** (`5_generation.ex`)
- * Tworzy końcową odpowiedź na podstawie najwyżej ocenionych artykułów
- * Obsługuje generowanie równoległe (wiele kandydatów na odpowiedź)
- * Umożliwia konfigurację modelu, temperatury oraz opcji rozumowania
+5. **Response Generation** (`5_generation.ex`)
+   * Creates the final response based on highest-rated articles
+   * Supports parallel generation (multiple response candidates)
+   * Allows configuration of model, temperature, and reasoning options
 
-6. **Ponowne rangowanie odpowiedzi** (`6_response_rerank.ex`)
- * Weryfikuje i wybiera najlepszą odpowiedź spośród kandydatów
- * Przeprowadza końcową kontrolę jakości przed zwróceniem odpowiedzi
+6. **Response Reranking** (`6_response_rerank.ex`)
+   * Verifies and selects the best response from candidates
+   * Performs final quality control before returning the response
 
-## Przepływ Pracy Wysyłania Wiadomości
+## Message Sending Workflow
 
-1. **Użytkownik** pisze wiadomość w ChatView i klika wysłanie
-2. **Frontend waliduje** wiadomość, autentykację, ID czatu
-3. **HTTP POST** do `/api/chats/{chatId}/messages`
+1. **User** types a message in ChatView and clicks send
+2. **Frontend validates** the message, authentication, chat ID
+3. **HTTP POST** to `/api/chats/{chatId}/messages`
 4. **Backend**:
-   - Waliduje JWT token
-   - Tworzy rekord Message (rola: "user")
-   - Umieszcza `RunPipelineJob` w kolejce (Oban)
-   - Zwraca `202 Accepted` natychmiast
-5. **Async Job** — Worker wykonuje 6-etapowy pipeline:
-   - Transmituje postęp via WebSocket
-   - Tworzy rekord Message (rola: "assistant")
-   - Transmituje nową wiadomość via WebSocket
-6. **Frontend WebSocket** — Nasłuchuje aktualizacji:
-   - Aktualizuje stan AppContext
-   - ChatView re-renderuje z nowymi wiadomościami
+   - Validates JWT token
+   - Creates a Message record (role: "user")
+   - Enqueues `RunPipelineJob` in the queue (Oban)
+   - Returns `202 Accepted` immediately
+5. **Async Job** — Worker executes the 6-stage pipeline:
+   - Broadcasts progress via WebSocket
+   - Creates Message record (role: "assistant")
+   - Broadcasts new message via WebSocket
+6. **Frontend WebSocket** — Listens for updates:
+   - Updates AppContext state
+   - ChatView re-renders with new messages
 
-## Stos Technologiczny
+## Technology Stack
 
 ### **Frontend**
- * React - Biblioteka UI 
- * TypeScript - Język użyty we frontendzie
- * Vite - Build tool i dev server 
- * React Router - Routing po stronie klienta 
- * TailwindCSS - Stylizowanie
- * Sonner - Powiadomienia
+ * React - UI library
+ * TypeScript - Language used in the frontend
+ * Vite - Build tool and dev server
+ * React Router - Client-side routing
+ * TailwindCSS - Styling
+ * Sonner - Notifications
 
 ### **Backend**
- * Phoenix - Framework webowy
+ * Phoenix - Web framework
  * Elixir - Runtime
- * Ecto - Komunikacja z bazą danych
- * Oban - Kolejkowanie i obsługa długich zadań
- * Joken - Tokeny JWT
- * pgvector - Wektorowa baza danych
+ * Ecto - Database communication
+ * Oban - Queueing and long-running task handling
+ * Joken - JWT tokens
+ * pgvector - Vector database
 
-## Wymagania Wstępne
+## Prerequisites
 
-Przed rozpoczęciem pracy upewnij się, że masz zainstalowane:
+Before starting work, ensure you have installed:
 
-- **Elixir** ~> 1.15 (wraz z Erlang/OTP)
-- **Node.js** (dla frontendu)
-- **Docker** i Docker Compose (dla bazy danych PostgreSQL)
-- **pdftotext** z pakietu `poppler-utils` (wymagane do importowania dokumentów PDF)
+- **Elixir** ~> 1.15 (with Erlang/OTP)
+- **Node.js** (for the frontend)
+- **Docker** and Docker Compose (for PostgreSQL database)
+- **pdftotext** from `poppler-utils` package (required for importing PDF documents)
 
-## Struktura Projektu
+## Project Structure
 
 ```
 pf-rag/
 ├── api/           # Backend (Elixir/Phoenix)
 ├── ui/            # Frontend (React/TypeScript/Vite)
-├── db/            # Konfiguracja Docker dla PostgreSQL z pgvector
-└── docker-compose.yml  # Konfiguracja produkcyjna
+├── db/            # Docker configuration for PostgreSQL with pgvector
+└── docker-compose.yml  # Production configuration
 ```
 
-## Inicjalna Konfiguracja
+## Initial Setup
 
-Przed pierwszym uruchomieniem:
+Before the first run:
 
 ```bash
-# 1. Skopiuj plik ze zmiennymi środowiskowymi
+# 1. Copy the environment variables file
 cp .env.example .env
 
-# 2. Zainstaluj zależności backendu
+# 2. Install backend dependencies
 cd api && mix deps.get
 
-# 3. Utwórz i skonfiguruj bazę danych
+# 3. Create and configure the database
 mix ecto.setup
 
-# 4. Zainstaluj zależności frontendu
+# 4. Install frontend dependencies
 cd ../ui && npm install
 ```
 
-## Komendy Deweloperskie
+## Development Commands
 
 ### Backend (`api/`)
 
 ```bash
 cd api
 
-# Serwer deweloperski (http://localhost:4000)
+# Development server (http://localhost:4000)
 mix phx.server
 
-# Zarządzanie bazą danych
-mix ecto.migrate     # Uruchom migracje
-mix ecto.reset       # Usuń i utwórz od nowa
+# Database management
+mix ecto.migrate     # Run migrations
+mix ecto.reset       # Drop and recreate
 ```
 
 ### Frontend (`ui/`)
@@ -174,83 +174,83 @@ mix ecto.reset       # Usuń i utwórz od nowa
 ```bash
 cd ui
 
-# Serwer deweloperski (http://localhost:5173)
+# Development server (http://localhost:5173)
 npm run dev
 ```
 
-### Baza Danych
+### Database
 
 ```bash
-# Uruchomienie samej bazy danych
+# Start only the database
 docker compose -f db/docker-compose-dev.yml up -d
 
-# Zatrzymanie bazy danych
+# Stop the database
 docker compose -f db/docker-compose-dev.yml down
 ```
 
-## Endpointy API
+## API Endpoints
 
-### Autentykacja
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
-| POST | `/api/auth` | Logowanie |
-| POST | `/api/auth/register` | Rejestracja |
-| POST | `/api/auth/logout` | Wylogowanie |
-| GET | `/api/auth/me` | Dane aktualnego użytkownika |
-| PATCH | `/api/auth/me/username` | Zmiana nazwy użytkownika |
-| PATCH | `/api/auth/me/password` | Zmiana hasła |
-| DELETE | `/api/auth/me` | Usunięcie konta |
-| GET | `/api/auth/wstoken` | Token dla WebSocket |
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth` | Login |
+| POST | `/api/auth/register` | Registration |
+| POST | `/api/auth/logout` | Logout |
+| GET | `/api/auth/me` | Current user data |
+| PATCH | `/api/auth/me/username` | Change username |
+| PATCH | `/api/auth/me/password` | Change password |
+| DELETE | `/api/auth/me` | Delete account |
+| GET | `/api/auth/wstoken` | Token for WebSocket |
 
-### Klucze API
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
-| GET | `/api/auth/keys` | Lista kluczy API |
-| POST | `/api/auth/keys` | Dodanie klucza API |
-| POST | `/api/auth/keys/selected` | Wybór aktywnego klucza |
-| DELETE | `/api/auth/keys/:key_id` | Usunięcie klucza API |
+### API Keys
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/auth/keys` | List API keys |
+| POST | `/api/auth/keys` | Add API key |
+| POST | `/api/auth/keys/selected` | Select active key |
+| DELETE | `/api/auth/keys/:key_id` | Delete API key |
 
-### Czaty
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
-| GET | `/api/chats` | Lista czatów użytkownika |
-| GET | `/api/chats/:chat_id` | Szczegóły czatu |
-| GET | `/api/chats/:chat_id/messages` | Wiadomości w czacie |
-| POST | `/api/chats/new` | Nowy czat z pierwszą wiadomością |
-| POST | `/api/chats/:chat_id/messages` | Wyślij wiadomość |
-| POST | `/api/chats/:chat_id/rename` | Zmień nazwę czatu |
-| POST | `/api/chats/:chat_id/retry` | Ponów generowanie odpowiedzi |
-| DELETE | `/api/chats/:chat_id` | Usuń czat |
-| DELETE | `/api/chats/:chat_id/messages/:message_id` | Usuń wiadomość |
+### Chats
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/chats` | List user's chats |
+| GET | `/api/chats/:chat_id` | Chat details |
+| GET | `/api/chats/:chat_id/messages` | Messages in chat |
+| POST | `/api/chats/new` | New chat with first message |
+| POST | `/api/chats/:chat_id/messages` | Send message |
+| POST | `/api/chats/:chat_id/rename` | Rename chat |
+| POST | `/api/chats/:chat_id/retry` | Retry response generation |
+| DELETE | `/api/chats/:chat_id` | Delete chat |
+| DELETE | `/api/chats/:chat_id/messages/:message_id` | Delete message |
 
-### Artykuły (Baza Wiedzy)
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
-| GET | `/api/articles` | Lista artykułów |
-| GET | `/api/articles/:article_id` | Szczegóły artykułu |
+### Articles (Knowledge Base)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/articles` | List articles |
+| GET | `/api/articles/:article_id` | Article details |
 
-### Inne
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
+### Other
+| Method | Endpoint | Description |
+|--------|----------|-------------|
 | GET | `/api/health` | Health check |
 
-## Zmienne Środowiskowe
+## Environment Variables
 
-Projekt używa pliku `.env` do konfiguracji. Skopiuj `.env.example` do `.env` i ustaw:
+The project uses an `.env` file for configuration. Copy `.env.example` to `.env` and set:
 
-| Zmienna | Wymagana | Opis |
-|---------|----------|------|
-| `OPENROUTER_API_KEY` | Tak* | Klucz API do OpenRouter (używany przy importowaniu dokumentów) |
-| `SECRET_KEY_BASE` | W produkcji | Klucz szyfrowania sesji (generuj: `mix phx.gen.secret`) |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENROUTER_API_KEY` | Yes* | API key for OpenRouter (used when importing documents) |
+| `SECRET_KEY_BASE` | In production | Session encryption key (generate: `mix phx.gen.secret`) |
 
-\* Dla użytkowników końcowych klucz API jest przechowywany w bazie danych, ale do importowania dokumentów do bazy wiedzy wymagana jest zmienna środowiskowa.
+\* For end users, the API key is stored in the database, but the environment variable is required for importing documents into the knowledge base.
 
-Alternatywnie możesz ustawić zmienną w bieżącej sesji:
+Alternatively, you can set the variable in the current session:
 ```bash
-export OPENROUTER_API_KEY=twój_klucz
+export OPENROUTER_API_KEY=your_key
 ```
 
-## Testy
+## Tests
 
 ### Backend
 
@@ -259,69 +259,69 @@ cd api
 mix test
 ```
 
-Frontend nie posiada obecnie skonfigurowanego zestawu testów.
+The frontend currently does not have a configured test suite.
 
-## Struktura Bazy Danych
+## Database Structure
 
-Aplikacja używa PostgreSQL z rozszerzeniem `pgvector` do przechowywania embeddingów wektorowych.
+The application uses PostgreSQL with the `pgvector` extension for storing vector embeddings.
 
-### Tabele
+### Tables
 
-| Tabela | Opis |
-|--------|------|
-| `users` | Użytkownicy (id, username, password hash, selected_key_id, deleted_at) |
-| `chats` | Sesje czatów (id, name, author_id, deleted_at) |
-| `messages` | Wiadomości czatów (id, content, role, metadata, chat_id, author_id, deleted_at) |
-| `apikeys` | Zaszyfrowane klucze API LLM (id, name, encrypted_key, owner_id) |
-| `articles` | Artykuły bazy wiedzy z embeddingami (id, title, description, content, description_embedding, content_embedding, generation_cost, embedding_model) |
-| `oban_jobs` | Kolejka zadań w tle (zarządzana przez Oban) |
+| Table | Description |
+|-------|-------------|
+| `users` | Users (id, username, password hash, selected_key_id, deleted_at) |
+| `chats` | Chat sessions (id, name, author_id, deleted_at) |
+| `messages` | Chat messages (id, content, role, metadata, chat_id, author_id, deleted_at) |
+| `apikeys` | Encrypted LLM API keys (id, name, encrypted_key, owner_id) |
+| `articles` | Knowledge base articles with embeddings (id, title, description, content, description_embedding, content_embedding, generation_cost, embedding_model) |
+| `oban_jobs` | Background job queue (managed by Oban) |
 
-**Uwaga:** Wszystkie dane użytkownika używają "miękkiego usuwania" (pole `deleted_at`) zamiast fizycznego usuwania rekordów.
+**Note:** All user data uses "soft deletion" (`deleted_at` field) instead of physically deleting records.
 
-## Uruchomienie Aplikacji
+## Running the Application
 
-### Środowisko Produkcyjne
+### Production Environment
 
 ```bash
 docker compose -f docker-compose.yml build
 docker compose -f docker-compose.yml up -d
-# Aplikacja dostępa na localhost:80
+# Application available at localhost:80
 ```
 
-### Środowisko deweloperskie
+### Development Environment
 
 ```bash
 ./start.sh
 ```
 
-Skrypt uruchamia:
-1. **PostgreSQL** w Docker'ze na sql://localhost:5432
-2. **Backend Phoenix** na http://localhost:4000
-3. **Frontend Vite** na http://localhost:5173
+The script starts:
+1. **PostgreSQL** in Docker at sql://localhost:5432
+2. **Phoenix Backend** at http://localhost:4000
+3. **Vite Frontend** at http://localhost:5173
 
-## Dodawanie Dokumentów do Bazy Wiedzy
+## Adding Documents to the Knowledge Base
 
-Aplikacja umożliwia rozszerzanie bazy wiedzy o nowe dokumenty za pomocą Mix taska `rag.load`.
+The application allows extending the knowledge base with new documents using the `rag.load` Mix task.
 
-### Wymagania
+### Requirements
 
-* Ustawiona zmienna środowiskowa `OPENROUTER_API_KEY`
-* Zainstalowane narzędzie `pdftotext` (z pakietu `poppler-utils`) dla plików PDF
+* Set environment variable `OPENROUTER_API_KEY`
+* Installed `pdftotext` tool (from `poppler-utils` package) for PDF files
 
-### Użycie
+### Usage
 
 ```bash
 cd api
 mix rag.load path/to/document.pdf
 ```
 
-Task obsługuje pliki PDF oraz pliki tekstowe (`.txt`). Dokument zostanie podzielony na fragmenty, które następnie są przetwarzane przez pipeline:
+The task handles PDF files as well as text files (`.txt`). The document will be split into fragments, which are then processed through the pipeline:
 
-1. **Normalizacja i ocena trafności** - tekst jest czyszczony i oceniany pod kątem przydatności
-2. **Generowanie tytułu i opisu** - tworzone są metadane dla każdego fragmentu
-3. **Generowanie embeddingów** - tworzone są wektory dla wyszukiwania semantycznego
-4. **Zapis do bazy danych** - artykuły są zapisywane w tabeli `articles`
+1. **Normalization and relevance scoring** - text is cleaned and evaluated for usefulness
+2. **Title and description generation** - metadata is created for each fragment
+3. **Embedding generation** - vectors are created for semantic search
+4. **Database storage** - articles are saved in the `articles` table
 
-### Konfiguracja (opcjonalna)
+### Configuration (optional)
 
-W `api/config/config.exs` można dostosować parametry przetwarzania.
+In `api/config/config.exs` you can customize processing parameters.
